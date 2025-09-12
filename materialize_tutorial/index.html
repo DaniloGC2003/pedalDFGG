@@ -9,6 +9,11 @@
     
     <title>materialize tutorial</title>
     <style>
+        nav .badge {
+            position: relative;
+            top: 20px;
+            right: 20px;
+        }
         .box {
             height: 200px;
         }
@@ -17,14 +22,17 @@
 <body>
     <nav class="nav-wrapper indigo">
         <div class="container">
-            <a href="#" class="brand-logo">logo</a>
+            <a href="#" class="brand-logo">roblox.com</a>
             <a href="#" class="sidenav-trigger" data-target="mobile-links">
                 <i class="material-icons">menu</i>
             </a>
             <ul class="right hide-on-med-and-down">
                 <li><a href="#" class="white-text">Link 1</a></li>
                 <li><a href="#" class="white-text">Link 2</a></li>
-                <li><a href="#" class="white-text">Link 3</a></li>
+                <li><a href="#" class="btn-floating indigo darken-4 z-depth-0">
+                    <i class="material-icons">add</i>
+                </a></li>
+                <li><span class="badge white-text pink new">5</span></li>
             </ul>
         </div>
     </nav>
