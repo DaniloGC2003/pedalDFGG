@@ -15,8 +15,26 @@
     </style>
 </head>
 <body>
-    <nav class="nav-wrapper indigo"></nav>
+    <nav class="nav-wrapper indigo">
+        <div class="container">
+            <a href="#" class="brand-logo">logo</a>
+            <a href="#" class="sidenav-trigger" data-target="mobile-links">
+                <i class="material-icons">menu</i>
+            </a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="#" class="white-text">Link 1</a></li>
+                <li><a href="#" class="white-text">Link 2</a></li>
+                <li><a href="#" class="white-text">Link 3</a></li>
+            </ul>
+        </div>
+    </nav>
     
+    <ul class="sidenav" id="mobile-links">
+        <li><a href="#" class="black-text">Link 1</a></li>
+        <li><a href="#" class="black-text">Link 2</a></li>
+        <li><a href="#" class="black-text">Link 3</a></li>
+    </ul>
+
     <div class="container">
         <h1 class="center-align">hello</h1>
         <h2 class="right-align">title 2</h2>
@@ -37,6 +55,11 @@
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
         <!-- Compiled and minified JavaScript -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+        <script>
+            $(document).ready(function(){
+                $('.sidenav').sidenav();
+            });
+        </script>
     </div>
 </body>
 </html>
