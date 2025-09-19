@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Simple PWA</title>
+  <!--Import Google Icon Font-->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#317EFB">
+</head>
+<body class="grey lighten-4">
+
+  <nav class="nav-wrapper indigo">
+      <div class="container">
+          <a href="#" class="brand-logo">roblox.com</a>
+          <a href="#" class="sidenav-trigger" data-target="mobile-links">
+              <i class="material-icons">menu</i>
+          </a>
+          <ul class="right hide-on-med-and-down">
+              <li><a href="#" class="white-text">Link 1</a></li>
+              <li><a href="#" class="white-text">Link 2</a></li>
+              <li><a href="#" class="btn-floating indigo darken-4 z-depth-0">
+                  <i class="material-icons">add</i>
+              </a></li>
+              <li><span class="badge white-text pink new">5</span></li>
+          </ul>
+      </div>
+  </nav>
+  
+  <ul class="sidenav" id="mobile-links">
+      <li><a href="#" class="black-text">Link 1</a></li>
+      <li><a href="#" class="black-text">Link 2</a></li>
+      <li><a href="#" class="black-text">Link 3</a></li>
+  </ul>
+
+  <div class="container">
+      <h1 class="center-align">hello</h1>
+      <h2 class="right-align">title 2</h2>
+      <div class="wrapper box valign-wrapper grey lighten-2">
+          <p class="valign center-align" style="width: 100%;">paragraph lorem ipsum</p>
+      </div>
+      <p class="flow-text">flow text paragraph. Size changes dynamically</p>
+      <h4 class="hide">hidden title</h4>
+      <h4 class="hide-on-small-only indigo  red-text">HIDDEN MAYBE</h4>
+      <h4 class="indigo">not hidden title</h4>
+      <i class="material-icons green-text text-lighten-2">face</i>
+      <a href="#" class="btn pulse z-depth-5">
+          <span>SEND</span>
+          <i class="material-icons right">send</i>
+      </a>
+
+
+      <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+      <!-- Compiled and minified JavaScript -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+      <script>
+          $(document).ready(function(){
+              $('.sidenav').sidenav();
+          });
+      </script>
+  </div>
+
+  <script>
+    // Register the service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('SW registered'))
+        .catch(error => console.error('SW registration failed', error));
+    }
+  </script>
+</body>
+</html>
