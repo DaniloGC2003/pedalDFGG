@@ -1,0 +1,149 @@
+
+
+%% Classe de documento
+\documentclass[%% Opções (^ = padrão; > = para pacotes):
+  a4paper,%% Tamanho de papel: a4paper, letterpaper (^), etc.
+  12pt,%% Tamanho de fonte: 10pt (^), 11pt, 12pt, etc.
+  fleqn,%% Alinhamento de equações à esquerda (centralizado por padrão)
+%   draft,%% Aparência de documento (>): draft ou final (^)
+  english,%% Idioma secundário (penúltimo) (>)
+  brazilian,%% Idioma primário (último) (>)
+]{article}
+% \documentclass{scrartcl}
+\usepackage[overload]{textcase} 
+
+%% Pacotes utilizados
+\usepackage[%% Opções (^ = padrão; ¹ = Leiaute A; ² = Leiaute B):
+%   Layout    = A,%% Leiaute (margens): A (esquerda menor + recuo) ou B (iguais) (^)
+%   Font      = Calibri,%% Fonte principal: Arial (²), Calibri (¹), Times ou LaTeX
+%   RuleWidth = Text,%% Largura de linha (cabeçalho e rodapé): Zero (²), Text ou Paper (¹)
+%   AffilIcon = Off,%% Ícones de e-mail, Lattes, ORCID e Instituição: On (^) ou Off
+%   DocLic    = None,%% Licença do documento: CC (Creative Commons) (^) ou None
+%   CCLic     = BY-NC-ND,%% Licença CC: BY (^), BY-SA, BY-ND, BY-NC, BY-NC-SA ou BY-NC-ND
+%   Link      = TextColor,%% Cor de hyperlinks: DarkBlue (^) ou TextColor
+%   PageNum   = Off,%% Numeração de páginas: On (^) ou Off
+%   SectNum   = Off,%% Numeração de seções (\section): On (²) ou Off (¹)
+%   SectUnnum = Center,%% Alinhamento de seções (\section*): Center (¹) ou Left (²)
+%   Caption   = Left,%% Alinhamento de legendas: Center (^) ou Left
+%   Source    = Left,%% Alinhamento de fonte (referência): Center (^) ou Left
+%   ABNTCit   = NSB,%% Citação ABNT: AAY (NOME, ANO) (^), NRB (1) ou NSB [1]
+%   BibDOI    = Icon,%% Ícone de DOI em referências: Icon ou Name (^)
+%   BibURL    = Icon,%% Ícone de URL em referências: Icon ou URL (^)
+]{utfpr-article}
+\usepackage[hyperlink]{qrcode}
+\usepackage{environ}
+\usepackage[fleqn]{nccmath}
+\usepackage{bm}
+\usepackage{listings}
+\NewEnviron{ceqnaling}
+    {\vspace{3mm}
+    \begin{ceqn}
+        \begin{align*}
+            \BODY
+        \end{align*}
+\end{ceqn}}
+\input{Extras/tikzComm}
+\newcommand{\Laplace}{\mathscr{L}}
+\newcommand{\bN}{\mathbb Z_{\ge 0}}
+\newcommand{\bPo}{\mathbb Z_{> 0}}
+\newcommand{\bC}{\mathbb C}
+\newcommand{\bZ}{\mathbb Z}
+\newcommand{\bR}{\mathbb R}
+\newcommand{\ztrans}{\mathcal{Z}}
+\newcommand{\parth}[1]{\left(#1\right)}
+\usepackage{enumerate}% http://ctan.org/pkg/enumerate
+\usepackage{listings}
+\lstdefinestyle{customc}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  frame=L,
+  xleftmargin=\parindent,
+  language=C,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\bfseries\color{green!40!black},
+  commentstyle=\itshape\color{purple!40!black},
+  identifierstyle=\color{blue},
+  stringstyle=\color{orange},
+}
+
+\lstdefinestyle{customasm}{
+  belowcaptionskip=1\baselineskip,
+  frame=L,
+  xleftmargin=\parindent,
+  language=[x86masm]Assembler,
+  basicstyle=\footnotesize\ttfamily,
+  commentstyle=\itshape\color{purple!40!black},
+}
+
+\lstset{escapechar=@,style=customc}
+% \usepackage[shortlabels]{enumitem}
+% \usepackage[ngerman]{babel} %Deutsche Sprachunterstützung
+% \usepackage[utf8]{inputenc} %Umlaute
+% \usepackage{subcaption}
+% \usepackage{graphicx}
+%%%% Autor(es) (de 1 a 8, Leiaute A; de 1 a 16, Leiaute B): {Número}; {Dados}
+\Author{1}{%% Bolsista ou voluntário(a) principal (primeiro)
+   Name        = {Danilo Gondo Chinen},%
+   Email       = {nda@nda.com},%
+ }
+ \Author{2}{%% Bolsista ou voluntário(a) principal (primeiro)
+   Name        = {Fabio Zhao Yuan Wang},%
+   Email       = {fabioyuan@gmail.com},%
+ }
+ \Author{3}{%% Bolsista ou voluntário(a) principal (primeiro)
+   Name        = {Gabriel Yudi Harada},%
+   Email       = {acyrmarconato@gmail.com},%
+ }
+ \Author{4}{%% Bolsista ou voluntário(a) principal (primeiro)
+   Name        = {Gregorio Antonio Daros Bussyguin},%
+   Email       = {acyrmarconato@gmail.com},%
+ }
+% \Author{2}{%% Colaborador(a) (segundo ao penúltimo)
+%   Name        = {Nome Completo do{(a)} Autor{(a)}-A2},%
+%   Email       = {author2@domain},%
+%   Lattes      = {0000000000000002},%% Opcional
+%   ORCID       = {0000-0000-0000-0002},%% Opcional (CHKTEX 8)
+%   Affiliation = {Instituição (Nome por Extenso), Cidade, Estado, País},%
+%   Role        = {Discente de Nome do Curso},%% Leiaute B
+% }
+% \Author{3}{%% Orientador(a) principal (último)
+%   Name        = {Nome Completo do{(a)} Autor{(a)}-A3},%
+%   Email       = {author3@domain},%
+%   Lattes      = {0000000000000003},%% Opcional
+%   ORCID       = {0000-0000-0000-0003},%% Opcional (CHKTEX 8)
+%   Affiliation = {\UTFPRName, Cidade, Paraná, Brasil},%
+%   Role        = {Docente do Nome do Departamento ou Programa},%% Leiaute B
+% }
+%%%% Digital Object Identifier (DOI): {Name}
+% \DOIName{10.1000/xyz123}
+%%%% Datas: [Ano] (atual por padrão; opcional); {Recebido}; {Aprovado}
+% \Dates[2023]{DD mmm. \YearNum}{DD mmm. \YearNum}
+%%%% Evento (SEI, SICITE, etc.): {Dados}
+% \EventInfo{%
+%   Name    = {Nome Completo do Evento},%
+%   Acronym = {EVNT \YearNum},%
+%   Date    = {DD a DD de Mmmmmm de \YearNum},%
+%   Local   = {Cidade, Paraná, Brasil},%
+%   Logo    = {example-image},%% Arquivo de imagem em ./Logos/
+%   Header  = {example-image},%% Arquivo de imagem em ./Headers/
+%   URL     = {https://www.example.com/},%
+% }
+%%%% Instituição (se nenhum evento): {Dados}
+ \InstitutionInfo{%
+   Campus     = {Curitiba},%
+   Department = {DAELN-Departamento de Eletrônica},%
+ }
+\usepackage{multirow}
+
+%% Arquivo(s) de referências
+\addbibresource{utfpr-article.bib}
+
+%% Início do documento
+\begin{document}
+%introdução
+\input{Sections/1-intro}
+%link
+% \input{Sections/2-meth}
+
+\end{document}

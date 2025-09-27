@@ -1,0 +1,96 @@
+\begin{center}
+\begin{tikzpicture}[auto, node distance=2cm, 
+    start chain=going below]
+    
+    % \node [input, name=md] (midi) {};
+    \node [block, name=mcu] (mcu) {MCU};
+    \node [input, name=mcint, below of=mcu, node distance=6mm] (mcint) {};
+    \node [input, name=mcurgt, right of=mcint, node distance=2mm] (mcurgt) {};
+    \node [input, name=mcur2, right of=mcurgt, node distance=2mm] (mcur2) {};
+    
+    \node [input, name=mculft, left of=mcurgt, node distance=4mm] (mculft) {};
+    \node [input, name=mcul2, left of=mculft, node distance=2mm] (mcul2) {};
+    \node [input, name=mcul3, left of=mcul2, node distance=2mm] (mcul3) {};
+    
+    \node [block, below of=mcu,  name=spin] (spin) {Processador + ADC + DAC};
+    \node [input, name=spinrgt,  below of=mcurgt, node distance=0.8cm] (spinrgt) {};
+    \node [input, name=spinr2, right of=spinrgt, node distance=2mm] (spinr2) {};
+    
+    \node [input, name=spinlft, left of=spinrgt, node distance=4mm] (spinlft) {};
+    \node [input, name=spinl2, left of=spinlft, node distance=2mm] (spinl2) {};
+    \node [input, name=spinl3, left of=spinl2, node distance=2mm] (spinl3) {};
+
+    
+    \draw [->] (mcu) -- node [name=mcu2spin] {} (spin);
+    \draw [->] (mcurgt) -- node {} (spinrgt);
+    \draw [->] (mculft) -- node {} (spinlft);
+    \draw [->] (mcul2) -- node {} (spinl2);
+    \draw [->] (mcur2) -- node {} (spinr2);
+    
+    \draw [->] (mcul3) -- node {} (spinl3);
+
+    \node [block, name=insig, left of=spin, node distance=60mm] (insig) 
+    {Entrada Sinal (stereo)};
+    \node [block, name=outsig, right of=spin, node distance=60mm] (outsig) {Saída Sinal (stereo)};
+
+    \draw [->] (insig) -- node {} (spin);
+    \draw [->] (spin) -- node {} (outsig);
+
+    \node [block, name=apl, above of=mcu] (apl) {Aplicação};
+    \node [input, name=apl2by, above of=apl] (apl2by) {};
+    \node [block, name=bypass, right of=apl2by] (bypass) {Bypass};
+
+    \draw[<->] (apl) -- node {} (mcu);
+
+    \node [input, name=in_midi, left of=apl, node distance=40mm] 
+    (in_midi) {MIDI in};
+    \draw [->] (in_midi) -- node {MIDI in} (apl);
+
+
+    \draw [dashed] (insig) |- (bypass);
+    \draw [dashed] (outsig) |- (bypass);
+    \draw [->] (mcu) -| (bypass);
+        
+    % \node [input, name=f2, below of=f1, node distance=9mm] 
+    % (f2) {};
+    
+    % \node [block, right of=f1, node distance=4cm] (hi1) {$h_{i,1}[n]$};
+    % \node [block, below of=hi1, node distance=9mm] (hi2) {$h_{i,2}[n]$};
+    % \node [on chain, join, below of=hi2, 
+    % node distance=9mm] (dotblock) {\rvdots};
+    % \node [block, below of=dotblock, node distance=9mm] (hin_1) {$h_{i,(N_e-1)}[n]$};
+    % \node [block, below of=hin_1, node distance=9mm] (hin) {$h_{i,N_e}[n]$};
+    
+    % \draw [->] (f1) -- node{$f_1[n]$} (hi1);    
+    % \draw [->] (f2) -- node [name=f2k] {$f_2[n]$} (hi2);
+
+    % \node [on chain, below of=f2k, 
+    % node distance=-10mm] (dotfs) {\rvdots};
+    % \node [input, name=fn_1, below of=f2, node distance=18mm] 
+    % (fn_1) {};
+    % \draw [->] (fn_1) -- node{$f_{N_e-1}[n]$} (hin_1);
+
+    % \node [input, name=fn, below of=fn_1, node distance=9mm] (fn) {};
+    % \draw [->] (fn) -- node{$f_{N_e}[n]$} (hin);
+
+
+    % \node[input, name=hi1n, right of=hi1, node distance=13mm] (hi1n){};
+    % \node[input, name=hi2n, below of=hi1n, node distance=9mm] (hi2n){};
+    % \node[input, name=hin_1n, below of=hi2n, node distance=18mm] (hin_1n){};
+    % \node[input, name=hinn, below of=hin_1n, node distance=9mm] (hinn){};
+
+    
+    % \node [sum, name=sum1, right of=dotblock, node distance = 2.5cm](sum1){$+$};
+
+    % \draw [->] (hi1n) -- node{} (sum1);    
+    % \draw [->] (hi2n) -- node{} (sum1);
+
+    % \draw [->] (hin_1n) -- node{} (sum1);    
+    % \draw [->] (hinn) -- node{} (sum1);
+
+    % \node[output, name=gi, right of=sum1](gi){};
+    % \draw [->] (sum1) -- node{$g_i[n]$} (gi);
+    
+    
+\end{tikzpicture}
+\end{center}

@@ -1,0 +1,33 @@
+\usepackage{tikz}
+\usetikzlibrary{chains}
+
+\makeatletter
+\DeclareRobustCommand{\rvdots}{%
+  \vbox{
+    \baselineskip4\p@\lineskiplimit\z@
+    \kern-\p@
+    \hbox{.}\hbox{.}\hbox{.}
+  }}
+\makeatother
+
+\tikzset{
+block/.style = {draw, minimum height=12mm, minimum width=26mm},
+tmp/.style  = {coordinate}, 
+sumpm/.style= {circle, draw, minimum size=9mm,
+                append after command={\pgfextra{\let\LN\tikzlastnode}
+                       (\LN.north west) edge (\LN.south east)
+                            (\LN.south west) edge (\LN.north east)
+                    node[left]     at (\LN.center) {$+$}
+                    node[below]    at (\LN.center) {$-$}}},
+sumpp/.style= {circle, draw, minimum size=9mm,
+                append after command={\pgfextra{\let\LN\tikzlastnode}
+                       (\LN.north west) edge (\LN.south east)
+                            (\LN.south west) edge (\LN.north east)
+                    node[left]     at (\LN.center) {$+$}
+                    node[below]    at (\LN.center) {$+$}}},
+input/.style = {coordinate},
+output/.style= {coordinate},
+pinstyle/.style = {pin edge={to-,thin,black}
+}
+}
+\tikzstyle{sum} = [draw, fill=white, circle, node distance=1cm]

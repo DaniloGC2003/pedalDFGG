@@ -1,0 +1,37 @@
+%%%% Elementos pré-textuais
+%%
+%% Lista de ilustrações, lista de tabelas, lista de abreviaturas e siglas, lista
+%% de símbolos e sumário.
+
+%% Tamanho de fonte: listas e sumário
+\csletcs{listsfontsize}{footnotesize}
+
+%% Lista de ilustrações (somente se houver muitas ilustrações)
+\listoffigures%
+
+%% Lista de tabelas (somente se houver muitas tabelas)
+\listoftables%
+
+%% Lista de abreviaturas e siglas (inserir itens em ordem alfabética)
+\begin{AcronymsList}%[Título Alternativo]%% Substitui o título padrão
+\item[ABNT] Associação Brasileira de Normas Técnicas
+\item[CTAN] \ENLang{Comprehensive \TeX\ Archive Network}
+\item[NBR] Norma Brasileira
+\item[PDF] Formato de Documento Portátil, do Inglês \ENLang*{Portable Document Format}
+\item[QR] Resposta Rápida, do Inglês \ENLang*{Quick Response}
+\item[TUG] \ENLang{\TeX\ Users Group}
+\item[URL] Localizador Uniforme de Recursos, do Inglês \ENLang*{Uniform Resource Locator}
+\item[UTFPR] Universidade Tecnológica Federal do Paraná
+\end{AcronymsList}
+
+%% Lista de símbolos (inserir itens em ordem de ocorrência)
+\begin{SymbolsList}%[Título Alternativo]%% Substitui o título padrão
+\item[u] Velocidade, \Unit{m/s}
+\item[\beta] Amplitude de velocidade, \Unit{m/s}
+\item[\pi] Constante circular (Pi), \Unit{rad}
+\item[A] Área, \Unit{m^2}
+\item[\mathrm{Re}] Número de Reynolds
+\end{SymbolsList}
+
+%% Sumário (somente se houver muitas seções)
+\tableofcontents%
