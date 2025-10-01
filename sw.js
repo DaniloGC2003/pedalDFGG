@@ -5,7 +5,8 @@ const assets = [
   '/css/styles.css',
   '/js/app.js',
   '/img/images/mrbeast.webp',
-  "https://fonts.googleapis.com/icon?family=Material+Icons"
+  "https://fonts.googleapis.com/icon?family=Material+Icons",
+  "https://fonts.gstatic.com/s/materialicons/v145/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2"
 ];
 
 // install service worker
@@ -25,5 +26,10 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   console.log('fetch event', event);
+  event.respondWith(
+    caches.match(event.request).then(cacheRes => {
+      return cacheRes || fetch(event.request);  
+    })
+  );
 });
  
