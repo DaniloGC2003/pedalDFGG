@@ -1,0 +1,12 @@
+.image-container {
+      text-align: center;       /* centers the image */
+      margin: 20px;             /* adds spacing around */
+      border: 2px solid #ccc;   /* adds a border */
+      padding: 10px;
+}
+
+.image-container img {
+    max-width: 100%;  /* responsive image */
+    height: auto;
+    border-radius: 10px; /* rounded corners */
+}
