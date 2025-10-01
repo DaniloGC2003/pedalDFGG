@@ -9,5 +9,6 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // basic; could add caching at some point
+  console.log('fetch event', event);
 });
+ 
