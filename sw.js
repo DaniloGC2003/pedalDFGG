@@ -1,4 +1,17 @@
-const staticCacheName = 'site-static-v2';
+// install service worker
+self.addEventListener('install', event => {
+  console.log('Service Worker installed.');
+});
+
+// activate service worker
+self.addEventListener('activate', event => {
+  console.log('Service Worker activated.');
+});
+
+self.addEventListener('fetch', event => {
+  // basic; could add caching at some point
+});
+/*const staticCacheName = 'site-static-v2';
 const dynamicCacheName = 'site-dynamic-v1';
 const assets = [
   '/',
@@ -48,4 +61,4 @@ self.addEventListener('fetch', evt => {
       });
     })
   );
-});
+});*/
