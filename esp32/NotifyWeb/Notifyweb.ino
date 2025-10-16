@@ -24,6 +24,13 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <BLE2901.h>
+#include <FastLED.h>
+
+//for on-board RGB LED control
+#define LED_TYPE    WS2812B
+#define COLOR_ORDER GRB
+#define PIN_LED 48
+CRGB leds[1];
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -64,6 +71,11 @@ class CharacteristicCallBack: public BLECharacteristicCallbacks {
 void setup() {
   Serial.begin(115200);
 
+  //for on-board RGB LED
+  FastLED.addLeds<LED_TYPE, PIN_LED, COLOR_ORDER>(leds, 1);
+  FastLED.setBrightness(255);
+
+  //button
   pinMode(0, INPUT_PULLUP);
 
   // Create the BLE Device
@@ -110,9 +122,16 @@ void loop() {
 
     // notify changed value
     if (deviceConnected) {
-      pCharacteristic->setValue((uint8_t *)&value, 4);
+      pCharacteristic->setValue((uint8_t *)&value, sizeof(uint8_t));
+      //Serial.print("sending bytes: ");
+
       pCharacteristic->notify();
       Serial.println("sending data");
+      leds[0] = CRGB::Green;
+      FastLED.show();
+      delay(1000);
+      leds[0] = CRGB::Black;   // equivalent to (0,0,0)
+      FastLED.show();
       value++;
     }
   }
