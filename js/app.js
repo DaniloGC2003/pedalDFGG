@@ -12,8 +12,15 @@ let messageCharacteristic;
 
 
 function handleRateChange(event) {
-  console.log("mensagem recebida\n");
-  console.log(event.target.value);
+    console.log("mensagem recebida\n");
+    const value = event.target.value;   
+    let bytes = [];
+
+    for (let i = 0; i < value.byteLength; i++) {
+        bytes.push(value.getUint8(i));
+    }
+
+    console.log("Received bytes:", bytes);
 }
 
 
