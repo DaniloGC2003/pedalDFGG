@@ -1,24 +1,3 @@
-/*
-    Video: https://www.youtube.com/watch?v=oCMOYS71NIU
-    Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleNotify.cpp
-    Ported to Arduino ESP32 by Evandro Copercini
-    updated by chegewara
-
-   Create a BLE server that, once we receive a connection, will send periodic notifications.
-   The service advertises itself as: 4fafc201-1fb5-459e-8fcc-c5c9c331914b
-   And has a characteristic of: beb5483e-36e1-4688-b7f5-ea07361b26a8
-
-   The design of creating the BLE server is:
-   1. Create a BLE Server
-   2. Create a BLE Service
-   3. Create a BLE Characteristic on the Service
-   4. Create a BLE Descriptor on the characteristic
-   5. Start the service.
-   6. Start advertising.
-
-   A connect handler associated with the server starts a background task that performs notification
-   every couple of seconds.
-*/
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -31,6 +10,14 @@
 #define COLOR_ORDER GRB
 #define PIN_LED 48
 CRGB leds[1];
+
+//for Arduino serial communication
+#define RXp2 16
+#define TXp2 17
+#define SERIAL_HEADER "ESP"
+#define HEADER_LEN 3
+#define PAYLOAD_LEN 8
+uint8_t buffer[PAYLOAD_LEN];
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -70,6 +57,8 @@ class CharacteristicCallBack: public BLECharacteristicCallbacks {
 
 void setup() {
   Serial.begin(115200);
+
+  Serial2.begin(9600, SERIAL_8N1, RXp2, TXp2);
 
   //for on-board RGB LED
   FastLED.addLeds<LED_TYPE, PIN_LED, COLOR_ORDER>(leds, 1);
@@ -115,7 +104,57 @@ void setup() {
   Serial.println("Waiting a client connection to notify...");
 }
 
+void printBufferBytes(uint8_t *buffer, size_t length) {
+  Serial.println("---- Buffer Dump ----");
+  for (size_t i = 0; i < length; i++) {
+    Serial.print("Byte ");
+    Serial.print(i);
+    Serial.print(": 0x");
+    if (buffer[i] < 0x10) Serial.print('0');  // leading zero for single-digit hex
+    Serial.print(buffer[i], HEX);
+    Serial.print(" (");
+    Serial.print(buffer[i], DEC);
+    Serial.println(")");
+  }
+  Serial.println("----------------------");
+}
+
 void loop() {
+  int i = 0;
+  char c;
+  bool match;
+  //Serial.println("Message Received: ");
+  //Serial.println(Serial2.readString());
+  //Serial2.println("SUP");
+  
+  if (Serial2.available() >= HEADER_LEN + PAYLOAD_LEN){
+    //Serial.println("Data in buffer");
+    // Check header match
+    c = Serial2.read();
+    if (c == SERIAL_HEADER[0]){
+      Serial.println("first char match");
+      match = 1;
+      for (i = 1; i < HEADER_LEN && match; i++){
+        c = Serial2.read();
+        if (c != SERIAL_HEADER[i]){
+          Serial.println("Header mismatch");
+          match = 0;
+        }
+      }
+      
+    }
+    if (match){
+      Serial.println("Header match.");
+      Serial2.readBytes(buffer, sizeof(buffer));
+      //printBufferBytes(buffer, sizeof(buffer));
+      Serial.print("Message received through serial ports: ");
+      for (int i = 0; i < sizeof(buffer); i++){
+        Serial.print(char(buffer[i]));
+      }
+      Serial.println();
+    }
+  }
+  
   if (digitalRead(0) == LOW && millis() - button_timer > 2000) {
     button_timer = millis();
     Serial.println("pressed");
