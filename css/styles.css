@@ -14,3 +14,13 @@
 .connect-ui {
     padding-top: 20px;
 }
+
+.connection-status::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.text-connection {
+    transform: translateY(15px);
+}
