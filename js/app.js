@@ -1,6 +1,8 @@
 const connectBTN = document.querySelector(".connect");
 const disconnectBTN = document.querySelector(".disconnect");
 const sendBTN = document.querySelector(".send");
+const errorTxt = document.querySelector(".error");
+
 let device;
 let messageCharacteristic;
 // Register the service worker

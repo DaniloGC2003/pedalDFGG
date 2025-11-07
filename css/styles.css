@@ -10,3 +10,7 @@
     height: auto;
     border-radius: 10px; /* rounded corners */
 }
+
+.connect-ui {
+    padding-top: 20px;
+}
