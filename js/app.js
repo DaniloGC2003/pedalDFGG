@@ -2,6 +2,8 @@ const connectBTN = document.querySelector(".connect");
 const disconnectBTN = document.querySelector(".disconnect");
 const sendBTN = document.querySelector(".send");
 const errorTxt = document.querySelector(".error");
+const bt_connection_icon = document.querySelector(".icon-connection");
+const text_connection = document.querySelector(".text-connection");
 
 let device;
 let messageCharacteristic;
@@ -38,6 +40,10 @@ async function connectDevice() {
     disconnectBTN.classList.remove("hide");
     connectBTN.classList.add("hide");
     console.log("connected");
+
+    //change connection status icon
+    bt_connection_icon.textContent = "bluetooth_connected";
+    text_connection.textContent = "Device connected";
 }
 
 async function disconnectDevice() {
@@ -61,6 +67,10 @@ async function disconnectDevice() {
     }
     disconnectBTN.classList.add("hide");
     connectBTN.classList.remove("hide");
+
+    //change connection status icon
+    bt_connection_icon.textContent = "bluetooth_disabled";
+    text_connection.textContent = "No device connected";
 }
 
 async function requestDevice() {
@@ -100,7 +110,10 @@ async function init() {
     if (!navigator.bluetooth) return errorTxt.classList.remove("hide");
 
     if (!device) await requestDevice();
+    //change connection status on page
     connectBTN.textContent = "connecting...";
+    bt_connection_icon.textContent = "bluetooth_searching";
+    text_connection.textContent = "Connecting"
     await connectDevice();
     await startMonitoring();
     //appUI.classList.remove("hide"); 

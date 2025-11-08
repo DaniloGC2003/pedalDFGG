@@ -1,3 +1,7 @@
+body {
+    background-color: #cccccc5c;
+}
+
 .image-container {
       text-align: center;       /* centers the image */
       margin: 20px;             /* adds spacing around */
@@ -23,4 +27,8 @@
 
 .text-connection {
     transform: translateY(15px);
+}
+
+.thumb {
+    display: none !important;
 }
