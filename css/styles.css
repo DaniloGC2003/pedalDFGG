@@ -29,6 +29,18 @@ body {
     transform: translateY(15px);
 }
 
+.slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider-container input[type="range"]{
+    all: unset;
+    width: 50%;
+}
+
+
 .thumb {
     display: none !important;
 }

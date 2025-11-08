@@ -4,6 +4,7 @@ const sendBTN = document.querySelector(".send");
 const errorTxt = document.querySelector(".error");
 const bt_connection_icon = document.querySelector(".icon-connection");
 const text_connection = document.querySelector(".text-connection");
+const slider_containers = document.querySelectorAll(".slider-container");
 
 let device;
 let messageCharacteristic;
@@ -14,8 +15,18 @@ let messageCharacteristic;
     .catch((error) => console.error('SW registration failed', error));
 }*/
 
+slider_containers.forEach(container => {
+    const slider = container.querySelector('input[type="range"]');
+    const value = container.querySelector('p');
 
-function handleRateChange(event) {
+    const updateValue = () => {
+        value.textContent = slider.value;
+    }
+    updateValue();
+    slider.addEventListener('input', updateValue);
+})
+
+function handleReceivedData(event) {
     console.log("mensagem recebida\n");
     const value = event.target.value;   
     let bytes = [];
@@ -36,7 +47,7 @@ async function connectDevice() {
     const service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
 
     messageCharacteristic = await service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8");
-    messageCharacteristic.addEventListener("characteristicvaluechanged", handleRateChange);
+    messageCharacteristic.addEventListener("characteristicvaluechanged", handleReceivedData);
     disconnectBTN.classList.remove("hide");
     connectBTN.classList.add("hide");
     console.log("connected");
