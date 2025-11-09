@@ -25,6 +25,8 @@ BLE2901 *descriptor_2901 = NULL;
 
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
+
+uint8_t ble_message[4];
 uint32_t value = 0;
 int button_timer = 0;
 
@@ -50,6 +52,7 @@ class MyServerCallbacks : public BLEServerCallbacks {
 class CharacteristicCallBack: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pChar) override { 
     String pChar2_value_string = pChar->getValue();
+    Serial.println(pChar2_value_string);
     int pChar2_value_int = pChar2_value_string.toInt();
     Serial.println("pChar2: " + String(pChar2_value_int)); 
   }
@@ -155,23 +158,26 @@ void loop() {
     }
   }
   
-  if (digitalRead(0) == LOW && millis() - button_timer > 2000) {
+  if (digitalRead(0) == LOW && millis() - button_timer > 100) {
     button_timer = millis();
     Serial.println("pressed");
 
     // notify changed value
     if (deviceConnected) {
-      pCharacteristic->setValue((uint8_t *)&value, sizeof(uint8_t));
+      for (int i = 0; i < 4; i++){
+        ble_message[i] = value;
+      }
+      pCharacteristic->setValue(ble_message, sizeof(ble_message));
       //Serial.print("sending bytes: ");
 
       pCharacteristic->notify();
       Serial.println("sending data");
       leds[0] = CRGB::Green;
       FastLED.show();
-      delay(1000);
+      delay(100);
       leds[0] = CRGB::Black;   // equivalent to (0,0,0)
       FastLED.show();
-      value++;
+      value = (value + 1) % 100;
     }
   }
 
