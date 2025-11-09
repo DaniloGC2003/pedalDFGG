@@ -12,6 +12,10 @@ const clk = document.querySelector("#clk");
 
 let device;
 let messageCharacteristic;
+
+const ble_payload = new Uint8Array(2);
+let busy_ble = false;
+
 // Register the service worker
 /*if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
@@ -25,24 +29,46 @@ slider_containers.forEach(container => {
 
     const updateValue = () => {
         value.textContent = slider.value;
-        let message = [];
-        if (container.id == "encoder0") {
-            message[0] = 0;
+        /*if (messageCharacteristic){
+            if (container.id == "encoder0") {
+                ble_payload[0] = 0x00;
+            }
+            else if (container.id == "encoder1") {
+                ble_payload[0] = 0x01;
+            }
+            else if (container.id == "encoder2") {
+                ble_payload[0] = 0x02;
+            }
+            else if (container.id == "clk") {
+                ble_payload[0] = 0x03;
+            }
+            ble_payload[1] = slider.value & 0xFF;
+            console.log("to be sent: " + ble_payload);
+            sendData(ble_payload);
+        }*/
+    }
+    const updateValueOnRelease = () => {
+        if (messageCharacteristic){
+            if (container.id == "encoder0") {
+                ble_payload[0] = 0x00;
+            }
+            else if (container.id == "encoder1") {
+                ble_payload[0] = 0x01;
+            }
+            else if (container.id == "encoder2") {
+                ble_payload[0] = 0x02;
+            }
+            else if (container.id == "clk") {
+                ble_payload[0] = 0x03;
+            }
+            ble_payload[1] = slider.value & 0xFF;
+            console.log("to be sent: " + ble_payload);
+            sendData(ble_payload);
         }
-        else if (container.id == "encoder1") {
-            message[0] = 1;
-        }
-        else if (container.id == "encoder2") {
-            message[0] = 2;
-        }
-        else if (container.id == "clk") {
-            message[0] = 3;
-        }
-        message[1] = slider.value;
-        sendData(message);
     }
     updateValue();
     slider.addEventListener('input', updateValue);
+    slider.addEventListener('change', updateValueOnRelease);
 })
 
 function update_sliders_ble(bytes) {
@@ -137,13 +163,20 @@ async function sendData(data) {
         return;
     }
     
-    const dataBuffer = new TextEncoder().encode(data); 
+    //const dataBuffer = new TextEncoder().encode(data); 
 
-    console.log(`Sending data: ${data}`);
+    //console.log(`Sending data: ${data}`);
 
-    await messageCharacteristic.writeValue(dataBuffer);
+    // ignore message if data is currently being sent
+    if (busy_ble) {
+        return;
+    }
 
-    console.log("Data sent successfully.");
+    busy_ble = true;
+    await messageCharacteristic.writeValue(data);
+    busy_ble = false;
+
+    console.log("Data" + data + "sent successfully.");
 }
 
 
