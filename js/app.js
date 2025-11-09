@@ -5,6 +5,10 @@ const errorTxt = document.querySelector(".error");
 const bt_connection_icon = document.querySelector(".icon-connection");
 const text_connection = document.querySelector(".text-connection");
 const slider_containers = document.querySelectorAll(".slider-container");
+const encoder0 = document.querySelector("#encoder0");
+const encoder1 = document.querySelector("#encoder1");
+const encoder2 = document.querySelector("#encoder2");
+const clk = document.querySelector("#clk");
 
 let device;
 let messageCharacteristic;
@@ -21,10 +25,38 @@ slider_containers.forEach(container => {
 
     const updateValue = () => {
         value.textContent = slider.value;
+        let message = [];
+        if (container.id == "encoder0") {
+            message[0] = 0;
+        }
+        else if (container.id == "encoder1") {
+            message[0] = 1;
+        }
+        else if (container.id == "encoder2") {
+            message[0] = 2;
+        }
+        else if (container.id == "clk") {
+            message[0] = 3;
+        }
+        message[1] = slider.value;
+        sendData(message);
     }
     updateValue();
     slider.addEventListener('input', updateValue);
 })
+
+function update_sliders_ble(bytes) {
+    console.log("changing ble data");
+    encoder0.querySelector('input[type="range"]').value = bytes[0];
+    encoder1.querySelector('input[type="range"]').value = bytes[1];
+    encoder2.querySelector('input[type="range"]').value = bytes[2];
+    clk.querySelector('input[type="range"]').value = bytes[3];
+
+    encoder0.querySelector('p').textContent = bytes[0];
+    encoder1.querySelector('p').textContent = bytes[1];
+    encoder2.querySelector('p').textContent = bytes[2];
+    clk.querySelector('p').textContent = bytes[3];
+}
 
 function handleReceivedData(event) {
     console.log("mensagem recebida\n");
@@ -36,6 +68,8 @@ function handleReceivedData(event) {
     }
 
     console.log("Received bytes:", bytes);
+
+    update_sliders_ble(bytes);
 }
 
 
