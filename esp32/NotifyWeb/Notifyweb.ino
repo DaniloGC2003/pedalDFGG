@@ -18,6 +18,7 @@ CRGB leds[1];
 #define HEADER_LEN 3
 #define PAYLOAD_LEN 8
 uint8_t buffer[PAYLOAD_LEN];
+uint8_t buffer_tx[HEADER_LEN + PAYLOAD_LEN];
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -36,6 +37,21 @@ int button_timer = 0;
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
+void printBufferBytes(uint8_t *buffer, size_t length) {
+  Serial.println("---- Buffer Dump ----");
+  for (size_t i = 0; i < length; i++) {
+    Serial.print("Byte ");
+    Serial.print(i);
+    Serial.print(": 0x");
+    if (buffer[i] < 0x10) Serial.print('0');  // leading zero for single-digit hex
+    Serial.print(buffer[i], HEX);
+    Serial.print(" (");
+    Serial.print(buffer[i], DEC);
+    Serial.println(")");
+  }
+  Serial.println("----------------------");
+}
+
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) {
     deviceConnected = true;
@@ -52,9 +68,21 @@ class MyServerCallbacks : public BLEServerCallbacks {
 class CharacteristicCallBack: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pChar) override { 
     String pChar2_value_string = pChar->getValue();
-    Serial.println(pChar2_value_string);
-    int pChar2_value_int = pChar2_value_string.toInt();
-    Serial.println("pChar2: " + String(pChar2_value_int)); 
+    Serial.println("BLE packet received: ");
+    for (int i = 0; i < pChar2_value_string.length(); i++) {
+      Serial.print(uint8_t(pChar2_value_string[i]));
+      Serial.print(" ");
+    }
+    Serial.println();
+
+    //send serial data
+    Serial.println("Sending serial data");
+    int offset = 0;
+    memcpy(buffer_tx + offset, SERIAL_HEADER, HEADER_LEN);
+    offset += HEADER_LEN;
+    memcpy(buffer_tx + offset, pChar2_value_string.c_str(), pChar2_value_string.length());
+    Serial2.write(buffer_tx, sizeof(buffer_tx));
+    printBufferBytes(buffer_tx, sizeof(buffer_tx));
   }
 };
 
@@ -66,6 +94,8 @@ void setup() {
   //for on-board RGB LED
   FastLED.addLeds<LED_TYPE, PIN_LED, COLOR_ORDER>(leds, 1);
   FastLED.setBrightness(255);
+  leds[0] = CRGB::Black;   // equivalent to (0,0,0)
+  FastLED.show();
 
   //button
   pinMode(0, INPUT_PULLUP);
@@ -105,21 +135,6 @@ void setup() {
   pAdvertising->setMinPreferred(0x0);  // set value to 0x00 to not advertise this parameter
   BLEDevice::startAdvertising();
   Serial.println("Waiting a client connection to notify...");
-}
-
-void printBufferBytes(uint8_t *buffer, size_t length) {
-  Serial.println("---- Buffer Dump ----");
-  for (size_t i = 0; i < length; i++) {
-    Serial.print("Byte ");
-    Serial.print(i);
-    Serial.print(": 0x");
-    if (buffer[i] < 0x10) Serial.print('0');  // leading zero for single-digit hex
-    Serial.print(buffer[i], HEX);
-    Serial.print(" (");
-    Serial.print(buffer[i], DEC);
-    Serial.println(")");
-  }
-  Serial.println("----------------------");
 }
 
 void loop() {
