@@ -71,10 +71,6 @@ async function disconnectDevice() {
             connectBTN.textContent = "connect";
         }
 
-    } else if (device) {
-        console.log("Device already disconnected.");
-    } else {
-        console.log("No device selected for disconnection.");
     }
     disconnectBTN.classList.add("hide");
     connectBTN.classList.remove("hide");
