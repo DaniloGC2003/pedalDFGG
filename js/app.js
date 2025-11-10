@@ -1,6 +1,6 @@
 const connectBTN = document.querySelector(".connect");
 const disconnectBTN = document.querySelector(".disconnect");
-const sendBTN = document.querySelector(".send");
+const sendBTN = document.querySelector(".send"); // Botao usado para fins de debugging. Nao deve aparecer na versao oficial.
 const errorTxt = document.querySelector(".error");
 const bt_connection_icon = document.querySelector(".icon-connection");
 const text_connection = document.querySelector(".text-connection");
