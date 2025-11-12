@@ -1,10 +1,31 @@
 #define SERIAL_HEADER "ESP"
 #define HEADER_LEN 3
 #define PAYLOAD_LEN 8
+#define UPDATE_ENCODER_MESSAGE_ID 11
+#define UPDATE_ALL_ENCODERS_MESSAGE_ID 12
 
 uint8_t buffer_tx[HEADER_LEN + PAYLOAD_LEN];
 uint8_t buffer_rx[PAYLOAD_LEN];
+uint8_t slider_value[2];
 int offset = 0;
+
+void clearArray(uint8_t* arr) {
+  for (int i = 0; i < sizeof(arr); i++)
+    arr[i] = 0;
+}
+
+void createSerialPayload(uint8_t* buffer, int buffer_size, uint8_t message_id, uint8_t* message_bytes, int message_length) {
+  clearArray(buffer);
+  offset = 0;
+  memcpy(buffer + offset, SERIAL_HEADER, HEADER_LEN);// Header
+  offset += HEADER_LEN;
+  memcpy(buffer + offset, &message_id, 1);// message id
+  offset++;
+  if (message_bytes != NULL)
+    memcpy(buffer + offset, message_bytes, message_length);// message
+  else
+    Serial.println("null arr");
+}
 
 void printBufferBytes(uint8_t *buffer, size_t length) {
   Serial.println("---- Buffer Dump ----");
@@ -23,6 +44,9 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
 
 void setup() {
   Serial.begin(9600);
+  pinMode(8, INPUT_PULLUP);
+  slider_value[0] = 3;
+
 }
 
 char c;
@@ -55,20 +79,27 @@ void loop() {
         Serial.print(" ");
       }
       Serial.println();
-      printBufferBytes(buffer_rx, sizeof(buffer_rx));
+
+      if (buffer_rx[0] == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
+        uint8_t test_values[4] = {56, 1, 9, 38};
+        createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, test_values, 4);
+        Serial.println("sending all slider values");
+        Serial.println("Serial message to be sent: ");
+        printBufferBytes(buffer_tx, HEADER_LEN + PAYLOAD_LEN);
+        Serial.write(buffer_tx, sizeof(buffer_tx));
+      }
+      else if (buffer_rx[0] == UPDATE_ENCODER_MESSAGE_ID) {
+        Serial.println("UPDATE VALUE (CURRENTLY NOT IMPLEMENTED)");
+      }
     }
   }
 
   
-  // Write header into buffer
-  offset = 0;
-  memcpy(buffer_tx + offset, SERIAL_HEADER, HEADER_LEN);
-  offset += HEADER_LEN;
-  memcpy(buffer_tx + offset, "abacaxis", 8);
-  //printBufferBytes(buffer_tx, sizeof(buffer_tx));
-  //Serial.print("Sending serial data: ");
-  //Serial.write(buffer_tx, sizeof(buffer_tx));
-  //Serial.println();
-  //Serial.println(Serial.readString());
+  /*if (digitalRead(8) == LOW) {
+    Serial.println("Sending serial data");
+    slider_value[1] ++;
+    createSerialPayload(buffer_tx, UPDATE_ENCODER_MESSAGE_ID, slider_value);
+    Serial.write(buffer_tx, sizeof(buffer_tx));
+  }*/
   delay(500);
 }

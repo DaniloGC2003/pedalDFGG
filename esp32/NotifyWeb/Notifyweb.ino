@@ -17,7 +17,10 @@ CRGB leds[1];
 #define SERIAL_HEADER "ESP"
 #define HEADER_LEN 3
 #define PAYLOAD_LEN 8
-uint8_t buffer[PAYLOAD_LEN];
+#define UPDATE_ENCODER_MESSAGE_ID 11
+#define UPDATE_ALL_ENCODERS_MESSAGE_ID 12
+
+uint8_t buffer_rx[PAYLOAD_LEN];
 uint8_t buffer_tx[HEADER_LEN + PAYLOAD_LEN];
 
 BLEServer *pServer = NULL;
@@ -27,7 +30,7 @@ BLE2901 *descriptor_2901 = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-uint8_t ble_message[4];
+uint8_t ble_message[PAYLOAD_LEN];
 uint32_t value = 0;
 int button_timer = 0;
 
@@ -36,6 +39,22 @@ int button_timer = 0;
 
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+void clearArray(uint8_t* arr) {
+  for (int i = 0; i < sizeof(arr); i++)
+    arr[i] = 0;
+}
+
+void createSerialPayload(uint8_t* buffer, uint8_t message_id, uint8_t* message_bytes) {
+  clearArray(buffer);
+  int offset = 0;
+  memcpy(buffer + offset, SERIAL_HEADER, HEADER_LEN);// Header
+  offset += HEADER_LEN;
+  memcpy(buffer + offset, &message_id, 1);// message id
+  offset++;
+  if (message_bytes != NULL)
+    memcpy(buffer + offset, message_bytes, sizeof(message_bytes));// message
+}
 
 void printBufferBytes(uint8_t *buffer, size_t length) {
   Serial.println("---- Buffer Dump ----");
@@ -55,7 +74,12 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) {
     deviceConnected = true;
-    Serial.println("device connected");
+    Serial.println("device connected. Requesting decoder values");
+
+    // Request values
+    clearArray(buffer_tx);
+    createSerialPayload(buffer_tx, UPDATE_ALL_ENCODERS_MESSAGE_ID, NULL);
+    Serial2.write(buffer_tx, sizeof(buffer_tx));
   };
 
   void onDisconnect(BLEServer *pServer) {
@@ -80,6 +104,9 @@ class CharacteristicCallBack: public BLECharacteristicCallbacks {
     int offset = 0;
     memcpy(buffer_tx + offset, SERIAL_HEADER, HEADER_LEN);
     offset += HEADER_LEN;
+    int message_id = UPDATE_ENCODER_MESSAGE_ID;
+    memcpy(buffer_tx + offset, &message_id, 1);
+    offset ++;
     memcpy(buffer_tx + offset, pChar2_value_string.c_str(), pChar2_value_string.length());
     Serial2.write(buffer_tx, sizeof(buffer_tx));
     printBufferBytes(buffer_tx, sizeof(buffer_tx));
@@ -163,13 +190,31 @@ void loop() {
     }
     if (match){
       Serial.println("Header match.");
-      Serial2.readBytes(buffer, sizeof(buffer));
-      //printBufferBytes(buffer, sizeof(buffer));
+      Serial2.readBytes(buffer_rx, sizeof(buffer_rx));
       Serial.print("Message received through serial ports: ");
-      for (int i = 0; i < sizeof(buffer); i++){
-        Serial.print(char(buffer[i]));
-      }
+      printBufferBytes(buffer_rx, sizeof(buffer_rx));
       Serial.println();
+
+      if (buffer_rx[0] == UPDATE_ENCODER_MESSAGE_ID) {
+        clearArray(ble_message);
+        ble_message[0] = UPDATE_ENCODER_MESSAGE_ID;
+        ble_message[1] = buffer_rx[1];
+        ble_message[2] = buffer_rx[2];
+        pCharacteristic->setValue(ble_message, sizeof(ble_message));
+        pCharacteristic->notify();
+        Serial.println("sending BLE data");
+      }
+      else if (buffer_rx[0] == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
+        Serial.println("UPDATE_ALL_ENCODERS_MESSAGE_ID");
+        clearArray(ble_message);
+        ble_message[0] = UPDATE_ALL_ENCODERS_MESSAGE_ID;
+        ble_message[1] = buffer_rx[1];
+        ble_message[2] = buffer_rx[2];
+        ble_message[3] = buffer_rx[3];
+        ble_message[4] = buffer_rx[4];
+        pCharacteristic->setValue(ble_message, sizeof(ble_message));
+        pCharacteristic->notify();
+      }
     }
   }
   
