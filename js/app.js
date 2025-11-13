@@ -90,7 +90,22 @@ function update_all_sliders_ble(bytes) {
 }
 
 function update_single_slider_ble(bytes) {
-    
+    if (bytes[0] == 0x00) {
+        encoder0.querySelector('input[type="range"]').value = bytes[1];
+        encoder0.querySelector('p').textContent = bytes[1];
+    }
+    else if (bytes[0] == 0x01) {
+        encoder1.querySelector('input[type="range"]').value = bytes[1];
+        encoder1.querySelector('p').textContent = bytes[1];
+    }
+    else if (bytes[0] == 0x02) {
+        encoder2.querySelector('input[type="range"]').value = bytes[1];
+        encoder2.querySelector('p').textContent = bytes[1];
+    }
+    else if (bytes[0] == 0x03) {
+        clk.querySelector('input[type="range"]').value = bytes[1];
+        clk.querySelector('p').textContent = bytes[1];
+    }
 }
 
 
@@ -110,6 +125,7 @@ function handleReceivedData(event) {
     else if (value.getUint8(0) == UPDATE_ENCODER_MESSAGE_ID) {
         bytes.push(value.getUint8(1));
         bytes.push(value.getUint8(2));
+        update_single_slider_ble(bytes);
     }
     
     
@@ -172,7 +188,7 @@ async function requestDevice() {
     };
     device = await navigator.bluetooth.requestDevice(options);
 
-    //device.addEventListener("gattserverdisconnected", connectDevice);
+    device.addEventListener("gattserverdisconnected", connectDevice);
 }
 
 async function startMonitoring() {
