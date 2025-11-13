@@ -10,10 +10,13 @@ const encoder1 = document.querySelector("#encoder1");
 const encoder2 = document.querySelector("#encoder2");
 const clk = document.querySelector("#clk");
 
+const UPDATE_ENCODER_MESSAGE_ID = 11;
+const UPDATE_ALL_ENCODERS_MESSAGE_ID = 12;
+
 let device;
 let messageCharacteristic;
 
-const ble_payload = new Uint8Array(2);
+const ble_payload = new Uint8Array(8);
 let busy_ble = false;
 
 // Register the service worker
@@ -49,19 +52,21 @@ slider_containers.forEach(container => {
     }
     const updateValueOnRelease = () => {
         if (messageCharacteristic){
+            ble_payload.fill(0);
+            ble_payload[0] = UPDATE_ENCODER_MESSAGE_ID;
             if (container.id == "encoder0") {
-                ble_payload[0] = 0x00;
+                ble_payload[1] = 0x00;
             }
             else if (container.id == "encoder1") {
-                ble_payload[0] = 0x01;
+                ble_payload[1] = 0x01;
             }
             else if (container.id == "encoder2") {
-                ble_payload[0] = 0x02;
+                ble_payload[1] = 0x02;
             }
             else if (container.id == "clk") {
-                ble_payload[0] = 0x03;
+                ble_payload[1] = 0x03;
             }
-            ble_payload[1] = slider.value & 0xFF;
+            ble_payload[2] = slider.value & 0xFF;
             console.log("to be sent: " + ble_payload);
             sendData(ble_payload);
         }
@@ -71,7 +76,7 @@ slider_containers.forEach(container => {
     slider.addEventListener('change', updateValueOnRelease);
 })
 
-function update_sliders_ble(bytes) {
+function update_all_sliders_ble(bytes) {
     console.log("changing ble data");
     encoder0.querySelector('input[type="range"]').value = bytes[0];
     encoder1.querySelector('input[type="range"]').value = bytes[1];
@@ -84,18 +89,32 @@ function update_sliders_ble(bytes) {
     clk.querySelector('p').textContent = bytes[3];
 }
 
+function update_single_slider_ble(bytes) {
+    
+}
+
+
 function handleReceivedData(event) {
     console.log("mensagem recebida\n");
     const value = event.target.value;   
-    let bytes = [];
-
     for (let i = 0; i < value.byteLength; i++) {
-        bytes.push(value.getUint8(i));
+        console.log(value.getUint8(i));
     }
 
-    console.log("Received bytes:", bytes);
+    let bytes = [];
+    if (value.getUint8(0) == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
+        for (let i = 1; i < value.byteLength; i++)
+            bytes.push(value.getUint8(i));
+        update_all_sliders_ble(bytes);
+    }
+    else if (value.getUint8(0) == UPDATE_ENCODER_MESSAGE_ID) {
+        bytes.push(value.getUint8(1));
+        bytes.push(value.getUint8(2));
+    }
+    
+    
 
-    update_sliders_ble(bytes);
+
 }
 
 
@@ -115,6 +134,12 @@ async function connectDevice() {
     //change connection status icon
     bt_connection_icon.textContent = "bluetooth_connected";
     text_connection.textContent = "Device connected";
+
+    //request latest values for sliders
+    console.log("requesting latest values for sliders");
+    ble_payload.fill(0);
+    ble_payload[0] = UPDATE_ALL_ENCODERS_MESSAGE_ID;
+    sendData(ble_payload);
 }
 
 async function disconnectDevice() {
