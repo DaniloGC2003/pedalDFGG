@@ -74,12 +74,7 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) {
     deviceConnected = true;
-    Serial.println("device connected. Requesting decoder values");
-
-    // Request values
-    clearArray(buffer_tx);
-    createSerialPayload(buffer_tx, UPDATE_ALL_ENCODERS_MESSAGE_ID, NULL);
-    Serial2.write(buffer_tx, sizeof(buffer_tx));
+    //Serial.println("device connected. Requesting decoder values");
   };
 
   void onDisconnect(BLEServer *pServer) {
@@ -99,17 +94,27 @@ class CharacteristicCallBack: public BLECharacteristicCallbacks {
     }
     Serial.println();
 
-    //send serial data
-    Serial.println("Sending serial data");
-    int offset = 0;
-    memcpy(buffer_tx + offset, SERIAL_HEADER, HEADER_LEN);
-    offset += HEADER_LEN;
-    int message_id = UPDATE_ENCODER_MESSAGE_ID;
-    memcpy(buffer_tx + offset, &message_id, 1);
-    offset ++;
-    memcpy(buffer_tx + offset, pChar2_value_string.c_str(), pChar2_value_string.length());
-    Serial2.write(buffer_tx, sizeof(buffer_tx));
-    printBufferBytes(buffer_tx, sizeof(buffer_tx));
+    if ((uint8_t)pChar2_value_string[0] == UPDATE_ENCODER_MESSAGE_ID) {
+      //send serial data
+      Serial.println("Sending serial data");
+      int offset = 0;
+      memcpy(buffer_tx + offset, SERIAL_HEADER, HEADER_LEN);
+      offset += HEADER_LEN;
+      int message_id = UPDATE_ENCODER_MESSAGE_ID;
+      memcpy(buffer_tx + offset, &message_id, 1);
+      offset ++;
+      memcpy(buffer_tx + offset, pChar2_value_string.substring(1).c_str(), pChar2_value_string.length() - 1);
+      Serial2.write(buffer_tx, sizeof(buffer_tx));
+      printBufferBytes(buffer_tx, sizeof(buffer_tx));
+    }
+    else if ((uint8_t)pChar2_value_string[0] == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
+      Serial.println("Page requested all encoder values. Forwarding request to Arduino");
+      // Request all values
+      clearArray(buffer_tx);
+      createSerialPayload(buffer_tx, UPDATE_ALL_ENCODERS_MESSAGE_ID, NULL);
+      Serial2.write(buffer_tx, sizeof(buffer_tx));
+      printBufferBytes(buffer_tx, sizeof(buffer_tx));
+    }
   }
 };
 

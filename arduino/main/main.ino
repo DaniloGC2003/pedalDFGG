@@ -89,17 +89,21 @@ void loop() {
         Serial.write(buffer_tx, sizeof(buffer_tx));
       }
       else if (buffer_rx[0] == UPDATE_ENCODER_MESSAGE_ID) {
-        Serial.println("UPDATE VALUE (CURRENTLY NOT IMPLEMENTED)");
+        Serial.print("UPDATE ENCODER ");
+        Serial.print(buffer_rx[1]);
+        Serial.print(" VALUE ");
+        Serial.print(buffer_rx[2]);
+        Serial.println("(CURRENTLY NOT IMPLEMENTED)");
       }
     }
   }
 
   
-  /*if (digitalRead(8) == LOW) {
+  if (digitalRead(8) == LOW) {
     Serial.println("Sending serial data");
     slider_value[1] ++;
-    createSerialPayload(buffer_tx, UPDATE_ENCODER_MESSAGE_ID, slider_value);
+    createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ENCODER_MESSAGE_ID, slider_value, 2);
     Serial.write(buffer_tx, sizeof(buffer_tx));
-  }*/
+  }
   delay(500);
 }
