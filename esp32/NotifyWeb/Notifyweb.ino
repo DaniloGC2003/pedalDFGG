@@ -40,20 +40,22 @@ int button_timer = 0;
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-void clearArray(uint8_t* arr) {
-  for (int i = 0; i < sizeof(arr); i++)
+void clearArray(uint8_t* arr, int len) {
+  for (int i = 0; i < len; i++)
     arr[i] = 0;
 }
 
-void createSerialPayload(uint8_t* buffer, uint8_t message_id, uint8_t* message_bytes) {
-  clearArray(buffer);
+void createSerialPayload(uint8_t* buffer, int buffer_size, uint8_t message_id, uint8_t* message_bytes, int message_length) {
+  clearArray(buffer, buffer_size);
   int offset = 0;
   memcpy(buffer + offset, SERIAL_HEADER, HEADER_LEN);// Header
   offset += HEADER_LEN;
   memcpy(buffer + offset, &message_id, 1);// message id
   offset++;
   if (message_bytes != NULL)
-    memcpy(buffer + offset, message_bytes, sizeof(message_bytes));// message
+    memcpy(buffer + offset, message_bytes, message_length);// message
+  else
+    Serial.println("null arr");
 }
 
 void printBufferBytes(uint8_t *buffer, size_t length) {
@@ -110,8 +112,8 @@ class CharacteristicCallBack: public BLECharacteristicCallbacks {
     else if ((uint8_t)pChar2_value_string[0] == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
       Serial.println("Page requested all encoder values. Forwarding request to Arduino");
       // Request all values
-      clearArray(buffer_tx);
-      createSerialPayload(buffer_tx, UPDATE_ALL_ENCODERS_MESSAGE_ID, NULL);
+      clearArray(buffer_tx, HEADER_LEN + PAYLOAD_LEN);
+      createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, NULL, 0);
       Serial2.write(buffer_tx, sizeof(buffer_tx));
       printBufferBytes(buffer_tx, sizeof(buffer_tx));
     }
@@ -201,7 +203,7 @@ void loop() {
       Serial.println();
 
       if (buffer_rx[0] == UPDATE_ENCODER_MESSAGE_ID) {
-        clearArray(ble_message);
+        clearArray(ble_message, PAYLOAD_LEN);
         ble_message[0] = UPDATE_ENCODER_MESSAGE_ID;
         ble_message[1] = buffer_rx[1];
         ble_message[2] = buffer_rx[2];
@@ -211,7 +213,7 @@ void loop() {
       }
       else if (buffer_rx[0] == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
         Serial.println("UPDATE_ALL_ENCODERS_MESSAGE_ID");
-        clearArray(ble_message);
+        clearArray(ble_message, PAYLOAD_LEN);
         ble_message[0] = UPDATE_ALL_ENCODERS_MESSAGE_ID;
         ble_message[1] = buffer_rx[1];
         ble_message[2] = buffer_rx[2];

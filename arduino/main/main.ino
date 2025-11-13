@@ -9,13 +9,13 @@ uint8_t buffer_rx[PAYLOAD_LEN];
 uint8_t slider_value[2];
 int offset = 0;
 
-void clearArray(uint8_t* arr) {
-  for (int i = 0; i < sizeof(arr); i++)
+void clearArray(uint8_t* arr, int len) {
+  for (int i = 0; i < len; i++)
     arr[i] = 0;
 }
 
 void createSerialPayload(uint8_t* buffer, int buffer_size, uint8_t message_id, uint8_t* message_bytes, int message_length) {
-  clearArray(buffer);
+  clearArray(buffer, buffer_size);
   offset = 0;
   memcpy(buffer + offset, SERIAL_HEADER, HEADER_LEN);// Header
   offset += HEADER_LEN;
@@ -89,11 +89,11 @@ void loop() {
         Serial.write(buffer_tx, sizeof(buffer_tx));
       }
       else if (buffer_rx[0] == UPDATE_ENCODER_MESSAGE_ID) {
-        Serial.print("UPDATE ENCODER ");
+        Serial.print("Update encoder ");
         Serial.print(buffer_rx[1]);
-        Serial.print(" VALUE ");
+        Serial.print(" value ");
         Serial.print(buffer_rx[2]);
-        Serial.println("(CURRENTLY NOT IMPLEMENTED)");
+        Serial.println("(currently not implemented)");
       }
     }
   }
@@ -103,6 +103,7 @@ void loop() {
     Serial.println("Sending serial data");
     slider_value[1] ++;
     createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ENCODER_MESSAGE_ID, slider_value, 2);
+    printBufferBytes(buffer_tx, HEADER_LEN + PAYLOAD_LEN);
     Serial.write(buffer_tx, sizeof(buffer_tx));
   }
   delay(500);
