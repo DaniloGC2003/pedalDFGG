@@ -26,3 +26,9 @@ Os códigos de mensagem atualmente implementados são:
 - Uma mensagem de ID UPDATE_ENCODER_MESSAGE_ID conterá o ID e o valor atual referente a um dos parâmetros dos encoders do Arduino. A ESP32, por sua vez, deverá repassar essa informação à página web, a fim de que os valores sejam atualizados ao usuário.
 
 - Uma mensagem de ID UPDATE_ALL_ENCODERS_MESSAGE_ID do Arduino para a ESP32 é uma resposta do Arduino a uma mensagem anteriormente enviada com o mesmo ID. Essa mensagem recebida pela ESP32 contém todos os valores atuais dos encoders. Esses valores serão repassados via BLE para que a página seja atualizada.
+
+# Formato dos pacotes na comunicação BLE ESP32-página web
+
+A comunicação BLE utiliza o serviço de UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b" e possui uma única característica de UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8". A troca de mensagens entre ESP32 e página web ocorre através de pacotes de 8 bytes. Obrigatoriamente, o primeiro byte deve ser reservado para o ID da mensagem.
+
+(ainda estou escrevendo)
