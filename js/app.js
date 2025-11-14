@@ -135,67 +135,71 @@ function handleReceivedData(event) {
 
 
 async function connectDevice() {
-    console.log("connecting...");
-    if (device.gatt.connected) return;
+    console.log("connecting..."); 
 
-    const server = await device.gatt.connect();
-    const service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b");
+    if (device.gatt.connected) return; 
 
-    messageCharacteristic = await service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8");
-    messageCharacteristic.addEventListener("characteristicvaluechanged", handleReceivedData);
-    disconnectBTN.classList.remove("hide");
-    connectBTN.classList.add("hide");
-    console.log("connected");
+    const server = await device.gatt.connect(); 
 
-    //change connection status icon
-    bt_connection_icon.textContent = "bluetooth_connected";
-    text_connection.textContent = "Device connected";
+    // Recupera o serviço primário usando o UUID específico.
+    const service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b"); 
 
-    //request latest values for sliders
-    console.log("requesting latest values for sliders");
-    ble_payload.fill(0);
-    ble_payload[0] = UPDATE_ALL_ENCODERS_MESSAGE_ID;
-    sendData(ble_payload);
+    // Adquire a característica de mensagem.
+    messageCharacteristic = await service.getCharacteristic("beb5483e-36e1-4688-b7f5-ea07361b26a8"); 
+
+    // Adiciona o listener para lidar com dados recebidos.
+    messageCharacteristic.addEventListener("characteristicvaluechanged", handleReceivedData); 
+
+    // Atualiza UI
+    disconnectBTN.classList.remove("hide"); 
+    connectBTN.classList.add("hide"); 
+    bt_connection_icon.textContent = "bluetooth_connected"; 
+    text_connection.textContent = "Device connected"; 
+    console.log("connected"); 
+
+    console.log("requesting latest values for sliders"); 
+    ble_payload.fill(0); 
+    ble_payload[0] = UPDATE_ALL_ENCODERS_MESSAGE_ID; 
+    sendData(ble_payload); 
 }
 
 async function disconnectDevice() {
-    // Verificar se o dispositivo foi definido e se ele está conectado
-    if (device && device.gatt.connected) {
-        console.log("Disconnecting...");
-        
-        device.gatt.disconnect();
-        
-        console.log("BLE device disconnected");
-        device = null;
-        
-        if (connectBTN) {
-            connectBTN.textContent = "connect";
+    // Verificar se o dispositivo foi definido e se ele está conectado [4]
+    if (device && device.gatt.connected) { 
+        console.log("Disconnecting..."); 
+        device.gatt.disconnect(); 
+        console.log("BLE device disconnected"); 
+
+        messageCharacteristic = null;
+        device = null; 
+
+        if (connectBTN) { 
+            connectBTN.textContent = "connect"; 
         }
-
     }
-    disconnectBTN.classList.add("hide");
-    connectBTN.classList.remove("hide");
 
-    //change connection status icon
-    bt_connection_icon.textContent = "bluetooth_disabled";
-    text_connection.textContent = "No device connected";
+    // Atualiza UI
+    disconnectBTN.classList.add("hide");
+    connectBTN.classList.remove("hide"); 
+    bt_connection_icon.textContent = "bluetooth_disabled"; 
+    text_connection.textContent = "No device connected"; 
 }
 
 async function requestDevice() {
     const options = {
-    acceptAllDevices: true,
-    optionalServices: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"],
+        acceptAllDevices: true,
+        optionalServices: ["4fafc201-1fb5-459e-8fcc-c5c9c331914b"]
     };
-    device = await navigator.bluetooth.requestDevice(options);
 
-    device.addEventListener("gattserverdisconnected", connectDevice);
+    device = await navigator.bluetooth.requestDevice(options); 
+
+    device.addEventListener("gattserverdisconnected", init);
 }
 
 async function startMonitoring() {
-    await messageCharacteristic.startNotifications();
-    //heartUI.classList.remove("pause-animation");
+    // Se a conexão for estável até este ponto, a característica é válida.
+    await messageCharacteristic.startNotifications(); 
 }
-
 
 
 async function sendData(data) {
@@ -203,13 +207,10 @@ async function sendData(data) {
         console.error("Characteristic not intialized.");
         return;
     }
-    
-    //const dataBuffer = new TextEncoder().encode(data); 
-
-    //console.log(`Sending data: ${data}`);
 
     // ignore message if data is currently being sent
     if (busy_ble) {
+        console.log("BLE busy, message ignored");
         return;
     }
 
@@ -217,21 +218,33 @@ async function sendData(data) {
     await messageCharacteristic.writeValue(data);
     busy_ble = false;
 
-    console.log("Data" + data + "sent successfully.");
+    console.log("Data " + data + " sent successfully.");
 }
 
 
 async function init() {
-    if (!navigator.bluetooth) return errorTxt.classList.remove("hide");
+    console.log("Init function called");
+    if (!navigator.bluetooth) return errorTxt.classList.remove("hide"); 
 
+    // Tenta obter o dispositivo se não estiver definido (primeira conexão ou após desconexão manual).
     if (!device) await requestDevice();
-    //change connection status on page
-    connectBTN.textContent = "connecting...";
-    bt_connection_icon.textContent = "bluetooth_searching";
-    text_connection.textContent = "Connecting"
-    await connectDevice();
-    await startMonitoring();
-    //appUI.classList.remove("hide"); 
+
+    try {
+        // Atualiza a UI para o estado de "conectando" 
+        connectBTN.textContent = "connecting..."; 
+        bt_connection_icon.textContent = "bluetooth_searching"; 
+        text_connection.textContent = "Connecting" 
+
+        await connectDevice(); // 1. Conecta e adquire a characteristic
+        await startMonitoring(); // 2. Inicia as notificações
+
+    } catch (error) {
+        console.error("Connection or initialization failed:", error);
+        
+        // Em caso de qualquer falha durante a conexão/monitoramento, 
+        // reseta o estado da aplicação e a UI, chamando a rotina de desconexão.
+        disconnectDevice(); 
+    }
 }
 
 connectBTN.addEventListener("click", init);
