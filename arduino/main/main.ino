@@ -44,6 +44,7 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("Arduino boot");
   pinMode(8, INPUT_PULLUP);
   slider_value[0] = 3;
 
