@@ -141,6 +141,8 @@ async function connectDevice() {
 
     const server = await device.gatt.connect(); 
 
+    await new Promise(resolve => setTimeout(resolve, 500)); // Delay to ensure stable connection.   
+
     // Recupera o serviço primário usando o UUID específico.
     const service = await server.getPrimaryService("4fafc201-1fb5-459e-8fcc-c5c9c331914b"); 
 
