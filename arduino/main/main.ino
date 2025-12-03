@@ -75,24 +75,7 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
   Serial.println("----------------------");
 }
 
-void testdrawchar(void) {
-  display.clearDisplay();
-
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.setCursor(0, 0);     // Start at top-left corner
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-
-  // Not all the characters will fit on the display. This is normal.
-  // Library will draw what it can and the rest will be clipped.
-  for (int i = 0; i < 4; i++) {
-    
-  }
-  display.display();
-  delay(2000);
-}
-
-void testdrawstyles(void) {
+void drawEncoderValues(void) {
   display.clearDisplay();
 
   display.setTextSize(1);             // Normal 1:1 pixel scale
@@ -100,6 +83,9 @@ void testdrawstyles(void) {
   display.setCursor(0,0);             // Start at top-left corner
 
   for (int i = 0; i < 4; i++) {
+    display.print("Encoder ");
+    display.print(i);
+    display.print(": ");
     display.println(counter[i]);
   }
 
@@ -110,6 +96,11 @@ void testdrawstyles(void) {
 void setup() {
   Serial.begin(9600);
   Serial.println("Arduino boot");
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
   pinMode(8, INPUT_PULLUP);
   slider_value[0] = 3;
 
@@ -140,16 +131,8 @@ void setup() {
   // the library initializes this with an Adafruit splash screen.
   display.display();
   delay(2000); // Pause for 2 seconds
-
-  // Clear the buffer
   display.clearDisplay();
-
-  // Draw a single pixel in white
-  display.drawPixel(10, 10, SSD1306_WHITE);
-  display.display();
-
- // testdrawstyles();
-  testdrawchar();
+  drawEncoderValues();
 }
 
 void update_stats(int aux) {
@@ -227,6 +210,8 @@ void loop() {
         Serial.println(buffer_rx[2]);
         counter[buffer_rx[1]] = buffer_rx[2];
         old_values[buffer_rx[1]] = buffer_rx[2];
+
+        drawEncoderValues();
       }
     }
   }
@@ -274,9 +259,12 @@ void loop() {
           slider_value[1] = counter[i];
           Serial.print("Value ");
           Serial.println(counter[i]);
+
+          // Send message to ESP32
           createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ENCODER_MESSAGE_ID, slider_value, 2);
-          //printBufferBytes(buffer_tx, HEADER_LEN + PAYLOAD_LEN);
           Serial.write(buffer_tx, sizeof(buffer_tx));
+
+          drawEncoderValues();
         }
       }
       encdir = ""; // Clear the direction string after printing
