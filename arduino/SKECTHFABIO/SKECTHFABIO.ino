@@ -4,21 +4,7 @@
 #include <Adafruit_SSD1306.h>
 #include <TimerFive.h>
 #include <avr/io.h>
-
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
-#define SERIAL_HEADER "ESP"
-#define HEADER_LEN 3
-#define PAYLOAD_LEN 8
-#define UPDATE_ENCODER_MESSAGE_ID 11
-#define UPDATE_ALL_ENCODERS_MESSAGE_ID 12
-
-// Rotary Encoder Inputs
-#define inputCLK 2
+#define inputCLK 3
 #define DT1 4
 #define DT2 5
 #define DT3 6
@@ -33,17 +19,33 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define Dw A1
 #define BYP A2
 
+#define SERIAL_HEADER "ESP"
+#define HEADER_LEN 3
+#define PAYLOAD_LEN 8
+#define UPDATE_ENCODER_MESSAGE_ID 11
+#define UPDATE_ALL_ENCODERS_MESSAGE_ID 12
+
+uint8_t buffer_tx[HEADER_LEN + PAYLOAD_LEN];
+uint8_t buffer_rx[PAYLOAD_LEN];
+uint8_t slider_value[2];
+int offset = 0;
+ 
 // Use volatile if you ever move to interrupts
-//volatile int counter[4] = {0, 0, 0, 0}; 
-//volatile int counter_[4] = {0, 0, 0, 0};
+volatile int counter[4] = {0, 0, 0, 0}; 
+volatile int counter_[4] = {0, 0, 0, 0};
 
 volatile int pwm_out[4] = {0, 0, 0, 0};
 
 int eff_count=0;
 int eff_layer=0;
 
+int currentStateCLK;
+int previousStateCLK; 
+
+
 int currentStateUP;
 int previousStateUP; 
+
 
 int currentStateDW;
 int previousStateDW; 
@@ -54,21 +56,10 @@ int effPin[6] = {32, 34, 36, 38, 40, 42};
 unsigned long lastChangeTime = 0;
 const int scrollSpeed = 500; // Delay in milliseconds
 
-int pin_pwm_out[4] = {2, 44, 45, 46};
-
-uint8_t buffer_tx[HEADER_LEN + PAYLOAD_LEN];
-uint8_t buffer_rx[PAYLOAD_LEN];
-uint8_t slider_value[2];
-int offset = 0;
-
-// Use volatile if you ever move to interrupts
-volatile uint8_t counter[4] = {0, 0, 0, 0}; 
-volatile uint8_t counter_[4] = {0, 0, 0, 0};
-volatile uint8_t old_values[4] = {0, 0, 0, 0}; 
-int currentStateCLK;
-int previousStateCLK; 
 int pushButt[4] = {0, 0, 0, 0};
  
+
+int pin_pwm_out[4] = {2, 44, 45, 46};
 String encdir ="";
 String label[4] = {"EC0", "EC1", "EC2", "EC3"};
 
@@ -104,35 +95,11 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
   }
   Serial.println("----------------------");
 }
-
-void drawEncoderValues(void) {
-  display.clearDisplay();
-
-  display.setTextSize(1);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);        // Draw white text
-  display.setCursor(0,0);             // Start at top-left corner
-
-  for (int i = 0; i < 4; i++) {
-    display.print("Encoder ");
-    display.print(i);
-    display.print(": ");
-    display.println(counter[i]);
-  }
-
-  display.display();
-  delay(2000);
-}
-
-void setup() {
-  Serial.begin(9600);
-  Serial.println("Arduino boot");
-
-  //Timer5.initialize(31);
-  //Timer5.pwm(46, 512);
-  
-  //pinMode(8, INPUT_PULLUP);
+ 
+void setup() { 
   slider_value[0] = 3;
-
+  Timer5.initialize(31);
+  Timer5.pwm(46, 512);
   // Set all encoder and switch pins as inputs with pull-ups
   // This is the most important fix!
   pinMode(inputCLK, INPUT_PULLUP);
@@ -149,37 +116,27 @@ void setup() {
   pinMode(A0, INPUT_PULLUP);
   pinMode(A1, INPUT_PULLUP);
 
-  /*//fast pwm setting
+
+  //fast pwm setting
   TCCR2B &= B11111000;
   TCCR2B |= B00000001;
   //fast pwm setting
   TCCR1B &= B11111000;
-  TCCR1B |= B00000001;*/
+  TCCR1B |= B00000001;
 
 
   eff_count = 0;
+  // Setup Serial Monitor
+  Serial.begin(9600);
 
-
+    
   // Read the initial state of inputCLK
   // Assign to previousStateCLK variable
   previousStateCLK = digitalRead(inputCLK);
 
   analogWrite(effPin[4], eff_layer*255);
+} 
 
-
-
-  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-  }
-  // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
-  display.display();
-  delay(2000); // Pause for 2 seconds
-  display.clearDisplay();
-  drawEncoderValues();
-}
 void update_eff(int counter, int flag){
   eff[0] = counter % 2 * 255;
   eff[1] = int(floor(counter/2)) % 2 * 255;
@@ -206,7 +163,6 @@ void update_pwm(int index){
   }
 }
 
-
 void update_stats(int aux) {
   // Read this encoder's DT pin
   int currentDTState = digitalRead(aux);
@@ -215,8 +171,15 @@ void update_stats(int aux) {
   // Only run logic if this pin is active (LOW).
   // If it's HIGH (idle), this function will do nothing.
   if (currentDTState == LOW) { 
+    int index;
+
+    if (aux != DT2){
+      index = aux - DT1; // Get the index (0, 1, or 2)
+    } else{
+      index = 1;
+    }
+
     
-    int index = aux - DT1; // Get the index (0, 1, or 2)
     int count = counter[index];
     
     // Your original logic is now inside the check
@@ -238,11 +201,10 @@ void update_stats(int aux) {
     update_pwm(index);
   }
 }
-
 char c;
 int i = 0;
 bool match;
-void loop() {
+void loop() { 
   if (Serial.available() >= HEADER_LEN + PAYLOAD_LEN){
     //Serial.println("Data in buffer");
     // Check header match
@@ -271,7 +233,11 @@ void loop() {
       Serial.println();
 
       if (buffer_rx[0] == UPDATE_ALL_ENCODERS_MESSAGE_ID) {
-        createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, counter, 4);
+        uint8_t counterbyte[4];
+        for (int i = 0; i < 4; i++) {
+          counterbyte[i] = (uint8_t)(counter[i]);
+        }
+        createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, counterbyte, 4);
         Serial.println("sending all slider values");
         Serial.println("Serial message to be sent: ");
         printBufferBytes(buffer_tx, HEADER_LEN + PAYLOAD_LEN);
@@ -283,9 +249,8 @@ void loop() {
         Serial.print(" value ");
         Serial.println(buffer_rx[2]);
         counter[buffer_rx[1]] = buffer_rx[2];
-        old_values[buffer_rx[1]] = buffer_rx[2];
+        //old_values[buffer_rx[1]] = buffer_rx[2];
 
-        drawEncoderValues();
       }
     }
   }
@@ -293,6 +258,8 @@ void loop() {
   currentStateDW = digitalRead(A1);
 
   unsigned long currentTime = millis();
+
+
   if (currentTime - lastChangeTime > scrollSpeed) {
     
     if (currentStateUP != previousStateUP) {
@@ -317,6 +284,7 @@ void loop() {
       update_eff(eff_count, eff_layer);
     }
   }
+
   // Read the current state of inputCLK
   currentStateCLK = digitalRead(inputCLK);
 
@@ -330,20 +298,22 @@ void loop() {
   for (int i = 0; i < 4; i++) {
     if (pushButt[i] == LOW && (counter[i] != 100)) { // LOW means pressed (due to PULLUP)
       counter[i] = 100;
-	  update_pwm(i);
+      update_pwm(i);
      
-      Serial.print("Button ");
-      Serial.print(i);
-      Serial.println(" clicked.");
-      slider_value[0] = i;
-      slider_value[1] = counter[i];
-      createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ENCODER_MESSAGE_ID, slider_value, 2);
-      Serial.write(buffer_tx, sizeof(buffer_tx));
+      //Serial.print("Direction: ");
+      //Serial.print("PBW " + label[i]);
+      //Serial.print(" -- Value:");
+      for (int i = 0; i < 4; i++) {
+        //Serial.print(" ");
+        //Serial.print(counter[i]);
+      }
+      //Serial.println("");
     }
   }
+    
   // If the previous and the current state of the inputCLK are different then a pulse has occured
   if (currentStateCLK != previousStateCLK) { 
-    Serial.println("MUDOU");
+
     // Now, these calls will only affect the encoder that is
     // *actually* active (whose DT pin is LOW).
     update_stats(DT1);
@@ -353,31 +323,36 @@ void loop() {
 
     // Only print if a direction was set (avoids printing "Direction: -- Value: ...")
     if (encdir != "") {
+      /*Serial.print("Direction: ");
+      Serial.print(encdir);
+      Serial.print(" -- Value:");*/
       for (int i = 0; i < 4; i++) {
+        //Serial.print(" ");
+        //Serial.print(counter[i]);
+        
         if (counter[i] != counter_[i]){
-              update_pwm(i);
-        /*if (old_values[i] != counter[i]) {
-          Serial.print("Encoder ");
-          Serial.print(i);
-          Serial.print(" changed.");
-          slider_value[0] = i;
-          slider_value[1] = counter[i];
-          Serial.print("Value ");
-          Serial.println(counter[i]);
-
-          // Send message to ESP32
-          createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ENCODER_MESSAGE_ID, slider_value, 2);
-          Serial.write(buffer_tx, sizeof(buffer_tx));
-
-          drawEncoderValues();
-        }*/
+          update_pwm(i);
         }
-        encdir = ""; // Clear the direction string after printing
       }
+      /*Serial.println("");
+      Serial.print(eff_count);
+      Serial.print(" ");
+      Serial.print(eff_layer);
+      Serial.println("");*/
+      encdir = ""; // Clear the direction string after printing
+
+      //Send current encoder values
+      uint8_t counterbyte[4];
+      for (int i = 0; i < 4; i++) {
+        counterbyte[i] = (uint8_t)(counter[i]);
+      }
+      createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, counterbyte, 4);
+      //Serial.println("sending one slider value");
+      Serial.write(buffer_tx, sizeof(buffer_tx));
     }
   }
   // Update previousStateCLK with the current state
   previousStateUP = currentStateUP; 
-  previousStateDW = currentStateDW;
+  previousStateDW = currentStateDW; 
   previousStateCLK = currentStateCLK; 
 }
