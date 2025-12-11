@@ -2,17 +2,8 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
-
-// Use &Wire for the primary I2C pins (20 SDA, 21 SCL)
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
-
 #include <TimerFive.h>
 #include <avr/io.h>
-
 #define inputCLK 3
 #define DT1 4
 #define DT2 5
@@ -45,10 +36,8 @@ volatile int counter_[4] = {0, 0, 0, 0};
 
 volatile int pwm_out[4] = {0, 0, 0, 0};
 
-
-int maxStep = 150;
-int eff_count = 0;
-int eff_layer = 0;
+int eff_count=0;
+int eff_layer=0;
 
 int currentStateCLK;
 int previousStateCLK; 
@@ -65,9 +54,7 @@ int eff[6] = {0, 0, 0, 0, 0, 0};
 int effPin[6] = {32, 34, 36, 38, 40, 42};
 
 unsigned long lastChangeTime = 0;
-unsigned long lastChangeTime_ = 0;
-
-const int scrollSpeed = 250; // Delay in milliseconds
+const int scrollSpeed = 500; // Delay in milliseconds
 
 int pushButt[4] = {0, 0, 0, 0};
  
@@ -75,7 +62,6 @@ int pushButt[4] = {0, 0, 0, 0};
 int pin_pwm_out[4] = {2, 44, 45, 46};
 String encdir ="";
 String label[4] = {"EC0", "EC1", "EC2", "EC3"};
-
 
 void clearArray(uint8_t* arr, int len) {
   for (int i = 0; i < len; i++)
@@ -149,50 +135,7 @@ void setup() {
   previousStateCLK = digitalRead(inputCLK);
 
   analogWrite(effPin[4], eff_layer*255);
-
-  // Initialize with standard I2C address 0x3C
-  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;);
-  }
-
-  display.clearDisplay();
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0, 0);
-  display.println("pedal que pedala.");
-  display.display();
-
 } 
-
-// char symbol[4] = {char(177), char(177), char(177), char(177)};
-
-void update_display_pwm(){
-  display.setTextSize(2);
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("title eff");
-  display.setTextSize(1.7);
-  display.println("-------------------");
-  for (int i = 0; i < 4; i++) {
-    display.print(label[i]);
-    display.print(":[");
-    int aux = (10*counter[i])/maxStep;
-    for (int k = 0; k < 10; k++){
-      if (aux > k){
-        display.print(char(177));
-      }else{
-        display.print(" ");
-      }
-    }
-    display.print("]");
-    display.print(" |");
-    display.println(100*counter[i]/maxStep);
-    
-  }
-  display.println("-------------------");
-  display.display();
-}
 
 void update_eff(int counter, int flag){
   eff[0] = counter % 2 * 255;
@@ -210,10 +153,10 @@ void update_eff(int counter, int flag){
 
 void update_pwm(int index){
   if (index != 3){
-    pwm_out[index] = map(counter[index], 0, maxStep, 0, 255);
+    pwm_out[index] = map(counter[index], 0, 100, 0, 255);
     analogWrite(pin_pwm_out[index], pwm_out[index]);
   } else{
-    long targetFreq = map(counter[index], 0, maxStep, 20, 32768);
+    long targetFreq = map(counter[index], 0, 100, 20, 32768);
     long newPeriod = 1000000 / targetFreq;
     Timer5.setPeriod(newPeriod);
     Timer5.setPwmDuty(46, 512);
@@ -241,15 +184,15 @@ void update_stats(int aux) {
     
     // Your original logic is now inside the check
     if (digitalRead(aux) != currentStateCLK) { 
-      if (count < maxStep) {
-        // Encoder is rotating clockwise
-        count++;
-        encdir = " CW " + label[index];
-      }
-    } else {
       if (count > 0) {
         count--;
         encdir = "CCW " + label[index];
+      }
+    } else {
+      if (count < 100) {
+        // Encoder is rotating clockwise
+        count++;
+        encdir = " CW " + label[index];
       }
       
     }
@@ -352,21 +295,22 @@ void loop() {
   pushButt[3] = digitalRead(SW4);
 
   // Check all 3 buttons
-  if (currentTime - lastChangeTime > scrollSpeed) {
-    for (int i = 0; i < 4; i++) {
-      if (pushButt[i] == LOW && (counter[i] != maxStep)) { // LOW means pressed (due to PULLUP)
-        counter[i] = maxStep;
-        update_pwm(i);
-        update_display_pwm();
-        lastChangeTime = currentTime;
-      } else if (pushButt[i] == LOW && (counter[i] == maxStep)){
-        counter[i] = 0;
-        update_pwm(i);
-        update_display_pwm();
-        lastChangeTime = currentTime;
+  for (int i = 0; i < 4; i++) {
+    if (pushButt[i] == LOW && (counter[i] != 100)) { // LOW means pressed (due to PULLUP)
+      counter[i] = 100;
+      update_pwm(i);
+     
+      //Serial.print("Direction: ");
+      //Serial.print("PBW " + label[i]);
+      //Serial.print(" -- Value:");
+      for (int i = 0; i < 4; i++) {
+        //Serial.print(" ");
+        //Serial.print(counter[i]);
       }
+      //Serial.println("");
     }
   }
+    
   // If the previous and the current state of the inputCLK are different then a pulse has occured
   if (currentStateCLK != previousStateCLK) { 
 
@@ -379,15 +323,22 @@ void loop() {
 
     // Only print if a direction was set (avoids printing "Direction: -- Value: ...")
     if (encdir != "") {
-      if (counter[i] != counter_[i]){
+      /*Serial.print("Direction: ");
+      Serial.print(encdir);
+      Serial.print(" -- Value:");*/
+      for (int i = 0; i < 4; i++) {
+        //Serial.print(" ");
+        //Serial.print(counter[i]);
+        
+        if (counter[i] != counter_[i]){
           update_pwm(i);
-          update_display_pwm();
+        }
       }
-      // Serial.println("");
-      // Serial.print(eff_count);
-      // Serial.print(" ");
-      // Serial.print(eff_layer);
-      // Serial.println("");
+      /*Serial.println("");
+      Serial.print(eff_count);
+      Serial.print(" ");
+      Serial.print(eff_layer);
+      Serial.println("");*/
       encdir = ""; // Clear the direction string after printing
 
       //Send current encoder values
