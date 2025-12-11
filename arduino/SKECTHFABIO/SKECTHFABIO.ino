@@ -67,7 +67,7 @@ int effPin[6] = {32, 34, 36, 38, 40, 42};
 unsigned long lastChangeTime = 0;
 unsigned long lastChangeTime_ = 0;
 
-const int scrollSpeed = 250; // Delay in milliseconds
+const int scrollSpeed = 300; // Delay in milliseconds
 
 int pushButt[4] = {0, 0, 0, 0};
  
@@ -107,7 +107,7 @@ void printBufferBytes(uint8_t *buffer, size_t length) {
     Serial.print(buffer[i], DEC);
     Serial.println(")");
   }
-  Serial.println("----------------------");
+  Serial.print("----------------------");
 }
  
 void setup() { 
@@ -188,9 +188,17 @@ void update_display_pwm(){
     display.print("]");
     display.print(" |");
     display.println(100*counter[i]/maxStep);
+  }
+  for (int i = 0; i < 6; i++){
+    if (i < 3){
+      display.print(eff[i]/255);
+    } else{
+      display.print(eff[i]);
+    }
     
   }
-  display.println("-------------------");
+  
+  display.println("----------");
   display.display();
 }
 
@@ -199,13 +207,28 @@ void update_eff(int counter, int flag){
   eff[1] = int(floor(counter/2)) % 2 * 255;
   eff[2] = int(floor(counter/4)) % 2 * 255;
 
-  eff[3] = (flag == 0) * 255;
-  eff[4] = (flag == 1) * 255;
-  eff[5] = (flag == 2) * 255;
+  // eff[3] = (flag == 0) * 255;
+  // eff[4] = (flag == 1) * 255;
+  // eff[5] = (flag == 2) * 255;
+
+  if (flag == 0){
+    eff[3] = 0;
+    eff[4] = 0;
+    eff[5] = 0;
+  }else if (flag == 1){
+    eff[3] = 1;
+    eff[4] = 1;
+    eff[5] = 0;
+  }else if (flag == 2){
+    eff[3] = 1;
+    eff[4] = 0;
+    eff[5] = 1;
+  }
 
   for (int i = 0; i < 6; i++){    
     analogWrite(effPin[i], eff[i]);
   }
+  update_display_pwm();
 }
 
 void update_pwm(int index){
