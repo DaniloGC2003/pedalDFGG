@@ -157,7 +157,7 @@ void setup() {
   }
 
   display.clearDisplay();
-  display.setTextSize(2);
+  display.setTextSize(1.5);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println("pedal que pedala.");
@@ -165,17 +165,63 @@ void setup() {
 
 } 
 
-// char symbol[4] = {char(177), char(177), char(177), char(177)};
+
+// [3] Blocks
+// [8] Rows per block
+// [4] Strings per row
+const char *effects_mem_int[3][8][4] = {
+    { // Block 0
+        {"Chorus", "RM  ", "SPD ", "CM  "},
+        {"Flanger", "RM  ", "SPD ", "FM  "},
+        {"Tremolo", "RM  ", "SPD ", "TM  "},
+        {"Pitch", "PIT ", "OFF ", "OFF "},
+        {"Echo", "OFF ", "TLY ", "DM  "},
+        {"Bypass", "OFF ", "OFF ", "OFF "},
+        {"Reverb 1", "TIME", "HPF ", "LPF "},
+        {"Reverb 2", "TIME", "HPF ", "LPF "}  // Total 8 rows here
+    },
+    { // Block 1
+        {"Spring", "TONE", "TIME", "MIX "},
+        {"Hall", "TIME", "TONE", "MIX "},
+        {"Room", "DLY ", "TIME", "MIX "},
+        {"Pitch", "TIME", "PIT ", "DUMP"},
+        {"Echo", "TIME", "REP ", "DUMP"},
+        {"Shimmer", "PIT ", "TECH", "DUMP"},
+        {"LOFI", "TIME", "FDBK", "MIX "},
+        {"Reverse", "TIME", "DEC ", "DUMP"} // Total 8 rows here
+    },
+    { // Block 2
+        {"Pit. Delay", "TIME", "PIT ", "FDBK"},
+        {"Rev. Delay", "SIZE", "OFF ", "OFF "},
+        {"Rand. Delay", "SPD ", "TIME", "RAND"},
+        {"POG", "MIX ", " 01 ", " 02 "},
+        {"Tap Rev.", "OFF ", "OFF ", "OFF "},
+        {"Tremolo", "SHP ", "DEP ", "SPD "},
+        {"Vibrato", "REVL", "SPD ", "DEP "},
+        {"Phaser", "SPD ", "DEP ", "REG "}  // Total 8 rows here
+    }
+};
+
+// String effects_mem_ext1[8][4] = ;
+
+// String effects_mem_ext2[8][4] = {
+  
+// };
 
 void update_display_pwm(){
-  display.setTextSize(2);
+  display.setTextSize(1.5);
   display.clearDisplay();
   display.setCursor(0, 0);
-  display.println("title eff");
+  display.println(effects_mem_int[eff_layer][eff_count][0]);
   display.setTextSize(1.7);
   display.println("-------------------");
   for (int i = 0; i < 4; i++) {
-    display.print(label[i]);
+    if (i != 3){
+      display.print(effects_mem_int[eff_layer][eff_count][i+1]);
+    } else{
+      display.print("CLk ");
+    }
+    
     display.print(":[");
     int aux = (10*counter[i])/maxStep;
     for (int k = 0; k < 10; k++){
@@ -186,7 +232,7 @@ void update_display_pwm(){
       }
     }
     display.print("]");
-    display.print(" |");
+    display.print("|");
     display.println(100*counter[i]/maxStep);
   }
   for (int i = 0; i < 6; i++){
