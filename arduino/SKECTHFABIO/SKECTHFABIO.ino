@@ -46,7 +46,7 @@ volatile int counter_[4] = {0, 0, 0, 0};
 volatile int pwm_out[4] = {0, 0, 0, 0};
 
 
-int maxStep = 150;
+int maxStep = 100;
 int eff_count = 0;
 int eff_layer = 0;
 
@@ -67,7 +67,7 @@ int effPin[6] = {32, 34, 36, 38, 40, 42};
 unsigned long lastChangeTime = 0;
 unsigned long lastChangeTime_ = 0;
 
-const int scrollSpeed = 300; // Delay in milliseconds
+const int scrollSpeed = 750; // Delay in milliseconds
 
 int pushButt[4] = {0, 0, 0, 0};
  
@@ -181,14 +181,14 @@ const char *effects_mem_int[3][8][4] = {
         {"Reverb 2", "TIME", "HPF ", "LPF "}  // Total 8 rows here
     },
     { // Block 1
-        {"Spring", "TONE", "TIME", "MIX "},
-        {"Hall", "TIME", "TONE", "MIX "},
-        {"Room", "DLY ", "TIME", "MIX "},
-        {"Pitch", "TIME", "PIT ", "DUMP"},
-        {"Echo", "TIME", "REP ", "DUMP"},
-        {"Shimmer", "PIT ", "TECH", "DUMP"},
-        {"LOFI", "TIME", "FDBK", "MIX "},
-        {"Reverse", "TIME", "DEC ", "DUMP"} // Total 8 rows here
+        {"Pitch Echo", "TIME", "PIT.", "FDBK"},
+        {"POG", "OCT1", "OCT2", "MIX "},
+        {"Plate", "TIME ", "PIT.", "FIL."},
+        {"Shimmer", "TIME", "PIT ", "DAMP"},
+        {"Vibrato", "REVL", "SPD ", "DEP "},
+        {"Granular Delay", "DLY1", "DLY2", "FDBK"},
+        {"Random Delay", "SPD ", "TIME", "RAND"},
+        {"Reverse Reverb", "DLY ", "TIME", "DAMP"} // Total 8 rows here
     },
     { // Block 2
         {"Pit. Delay", "TIME", "PIT ", "FDBK"},
@@ -262,13 +262,13 @@ void update_eff(int counter, int flag){
     eff[4] = 0;
     eff[5] = 0;
   }else if (flag == 1){
-    eff[3] = 1;
-    eff[4] = 1;
-    eff[5] = 0;
+    eff[3] = 0;
+    eff[4] = 255;
+    eff[5] = 255;
   }else if (flag == 2){
-    eff[3] = 1;
+    eff[3] = 255;
     eff[4] = 0;
-    eff[5] = 1;
+    eff[5] = 255;
   }
 
   for (int i = 0; i < 6; i++){    
@@ -279,7 +279,8 @@ void update_eff(int counter, int flag){
 
 void update_pwm(int index){
   if (index != 3){
-    pwm_out[index] = map(counter[index], 0, maxStep, 0, 255);
+    // pwm_out[index] = map(counter[index], 0, maxStep, 0, 255);
+    pwm_out[index] = int(counter[index]*255/maxStep);
     analogWrite(pin_pwm_out[index], pwm_out[index]);
   } else{
     long targetFreq = map(counter[index], 0, maxStep, 20, 32768);
@@ -391,7 +392,7 @@ void loop() {
     if (currentStateUP != previousStateUP) {
       eff_count = (eff_count + 1) % 8;
       if (eff_count == 0) {
-        eff_layer = (eff_layer + 1) % 3;
+        eff_layer = (eff_layer + 1) % 2;
       }
       lastChangeTime = currentTime;
       update_eff(eff_count, eff_layer);
@@ -401,9 +402,9 @@ void loop() {
       eff_count = (eff_count - 1) % 8;
       if (eff_count < 0){
         eff_count = 7;
-        eff_layer = (eff_layer - 1) % 3;
+        eff_layer = (eff_layer - 1) % 2;
         if (eff_layer < 0){
-          eff_layer = 2;
+          eff_layer = 1;
         }
       }
       lastChangeTime = currentTime;
