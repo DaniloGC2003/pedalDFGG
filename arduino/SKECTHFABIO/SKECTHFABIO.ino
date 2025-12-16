@@ -14,6 +14,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 #include <TimerFive.h>
 #include <avr/io.h>
 
+#define CC_P0 20
+#define CC_P1 21
+#define CC_P2 22
+#define CC_CLK 23
+
 #define inputCLK 3
 #define DT1 4
 #define DT2 5
@@ -46,7 +51,7 @@ volatile int counter_[4] = {0, 0, 0, 0};
 
 volatile int pwm_out[4] = {0, 0, 0, 0};
 
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, MIDI);
 
 int maxStep = 100;
 int eff_count = 0;
@@ -143,9 +148,10 @@ void setup() {
 
   eff_count = 0;
   // Setup Serial Monitor
-  Serial.begin(31250); // Serial monitor and MIDI
+  Serial.begin(115200); // Serial monitor
   MIDI.begin(MIDI_CHANNEL_OMNI);
   Serial1.begin(115200); // ESP32
+  Serial2.begin(31250); // MIDI
 
     
   // Read the initial state of inputCLK
@@ -386,7 +392,24 @@ void loop() {
     }
   }
   if (MIDI.read()) {
-    Serial.println("MIDI data available");
+    if (MIDI.getType() == midi::ControlChange) {
+      byte channel = MIDI.getChannel();
+      byte cc      = MIDI.getData1();
+      byte value   = MIDI.getData2();
+
+      if (cc == CC_P0) {
+        counter[0] = value;
+      }
+      else if (cc == CC_P1) {
+        counter[1] = value;
+      }
+      else if (cc == CC_P2) {
+        counter[2] = value;
+      }
+      else if (cc == CC_CLK) {
+        counter[3] = value;
+      }
+    }
   }
   currentStateUP = digitalRead(A0);
   currentStateDW = digitalRead(A1);
@@ -436,11 +459,27 @@ void loop() {
         update_pwm(i);
         update_display_pwm();
         lastChangeTime = currentTime;
+        //Send current encoder values
+        uint8_t counterbyte[4];
+        for (int i = 0; i < 4; i++) {
+          counterbyte[i] = (uint8_t)(counter[i]);
+        }
+        createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, counterbyte, 4);
+        //Serial.println("sending one slider value");
+        Serial1.write(buffer_tx, sizeof(buffer_tx));
       } else if (pushButt[i] == LOW && (counter[i] == maxStep)){
         counter[i] = 0;
         update_pwm(i);
         update_display_pwm();
         lastChangeTime = currentTime;
+        //Send current encoder values
+        uint8_t counterbyte[4];
+        for (int i = 0; i < 4; i++) {
+          counterbyte[i] = (uint8_t)(counter[i]);
+        }
+        createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, counterbyte, 4);
+        //Serial.println("sending one slider value");
+        Serial1.write(buffer_tx, sizeof(buffer_tx));
       }
     }
   }
