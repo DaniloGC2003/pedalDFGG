@@ -1,3 +1,4 @@
+#include <MIDI.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -45,6 +46,7 @@ volatile int counter_[4] = {0, 0, 0, 0};
 
 volatile int pwm_out[4] = {0, 0, 0, 0};
 
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 int maxStep = 100;
 int eff_count = 0;
@@ -141,7 +143,9 @@ void setup() {
 
   eff_count = 0;
   // Setup Serial Monitor
-  Serial.begin(9600);
+  Serial.begin(31250); // Serial monitor and MIDI
+  MIDI.begin(MIDI_CHANNEL_OMNI);
+  Serial1.begin(115200); // ESP32
 
     
   // Read the initial state of inputCLK
@@ -332,15 +336,15 @@ char c;
 int i = 0;
 bool match;
 void loop() { 
-  if (Serial.available() >= HEADER_LEN + PAYLOAD_LEN){
+  if (Serial1.available() >= HEADER_LEN + PAYLOAD_LEN){ // ESP32
     //Serial.println("Data in buffer");
     // Check header match
-    c = Serial.read();
+    c = Serial1.read();
     if (c == SERIAL_HEADER[0]){
       Serial.println("first char match");
       match = 1;
       for (i = 1; i < HEADER_LEN && match; i++){
-        c = Serial.read();
+        c = Serial1.read();
         if (c != SERIAL_HEADER[i]){
           Serial.println("Header mismatch");
           match = 0;
@@ -350,7 +354,7 @@ void loop() {
     }
     if (match){
       Serial.println("Header match.");
-      Serial.readBytes(buffer_rx, sizeof(buffer_rx));
+      Serial1.readBytes(buffer_rx, sizeof(buffer_rx));
       //printBufferBytes(buffer, sizeof(buffer));
       Serial.print("Message received through serial ports: ");
       for (int i = 0; i < sizeof(buffer_rx); i++){
@@ -368,7 +372,7 @@ void loop() {
         Serial.println("sending all slider values");
         Serial.println("Serial message to be sent: ");
         printBufferBytes(buffer_tx, HEADER_LEN + PAYLOAD_LEN);
-        Serial.write(buffer_tx, sizeof(buffer_tx));
+        Serial1.write(buffer_tx, sizeof(buffer_tx));
       }
       else if (buffer_rx[0] == UPDATE_ENCODER_MESSAGE_ID) {
         Serial.print("Update encoder ");
@@ -380,6 +384,9 @@ void loop() {
 
       }
     }
+  }
+  if (MIDI.read()) {
+    Serial.println("MIDI data available");
   }
   currentStateUP = digitalRead(A0);
   currentStateDW = digitalRead(A1);
@@ -467,7 +474,7 @@ void loop() {
       }
       createSerialPayload(buffer_tx, HEADER_LEN + PAYLOAD_LEN, UPDATE_ALL_ENCODERS_MESSAGE_ID, counterbyte, 4);
       //Serial.println("sending one slider value");
-      Serial.write(buffer_tx, sizeof(buffer_tx));
+      Serial1.write(buffer_tx, sizeof(buffer_tx));
     }
   }
   // Update previousStateCLK with the current state
