@@ -396,7 +396,7 @@ void loop() {
       byte channel = MIDI.getChannel();
       byte cc      = MIDI.getData1();
       byte value   = MIDI.getData2();
-
+      value = map(value, 0, 127, 0, 100);
       if (cc == CC_P0) {
         counter[0] = value;
       }
